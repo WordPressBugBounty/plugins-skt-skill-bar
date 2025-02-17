@@ -1,8 +1,8 @@
 <style>
-table{border-collapse:collapse;}
-table td{padding:5px;}
-table td img{max-width:100%;}
-code{font-family:"Courier New", Courier, monospace; background:none;}
+table{ border-collapse:collapse; }
+table td{ padding:5px; }
+table td img{ max-width:100%; }
+code{ font-family:"Courier New", Courier, monospace; background:none; }
 </style>
 
 <div class="wrap">
@@ -13,13 +13,13 @@ code{font-family:"Courier New", Courier, monospace; background:none;}
     $dirPath = str_replace('/', '', $dirPathStr);
     ?>
     <div class="sktimagetop_admin_image">
-        <a href="<?php echo esc_url('https://www.sktthemes.org/themes/'); ?>" title="<?php esc_html('SKT Wordpress Themes');?>" target="_blank"><img src="<?php echo esc_url(plugins_url( $dirPath.'/images/browse-themes.png' )); ?>" alt="<?php esc_html('SKT Wordpress Themes');?>" /></a>
+        <a href="<?php echo esc_url('https://www.sktthemes.org/themes/'); ?>" title="<?php esc_html( 'SKT Wordpress Themes' );?>" target="_blank"><img src="<?php echo esc_url(plugins_url( $dirPath.'/images/browse-themes.png' )); ?>" alt="<?php esc_html('SKT Wordpress Themes', 'skt-skill-bar' );?>" /></a>
     </div>
-    <?php echo "<h2>" . esc_html( 'SKT Skill Bar Options') . "</h2>"; ?>
+    <?php echo "<h2>" . esc_html( 'SKT Skill Bar Options', 'skt-skill-bar' ) . "</h2>"; ?>
     <table width="100%" class="fixed">
         <tr>
             <td width="75%">
-	            <img src="<?php echo esc_url(plugins_url( $dirPath.'/images/sample_bar.jpg' )); ?>" alt="<?php echo esc_html('Skill Bar');?>" /><br />
+	            <img src="<?php echo esc_url(plugins_url( $dirPath.'/images/sample_bar.jpg' )); ?>" alt="<?php echo esc_html( 'Skill Bar', 'skt-skill-bar'  );?>" /><br />
                 <code>
                     [skillwrapper type="bar" bar_titlefontsize="12" bar_titlecolor="#000" bar_percentfontszie="11" bar_percentcolor="#336699"]<br />
                         &nbsp;&nbsp;&nbsp;&nbsp;[skill title_background="#f7a53b" bar_foreground="#ff9000" bar_background="#eeeeee" percent="90" title="CSS3"]<br />
@@ -35,7 +35,7 @@ code{font-family:"Courier New", Courier, monospace; background:none;}
         </tr>
         <tr>
             <td>
-	            <img src="<?php echo esc_url(plugins_url( $dirPath.'/images/sample_gage.jpg' )); ?>" alt="<?php echo esc_html('Skill Gage');?>" /><br />
+	            <img src="<?php echo esc_url(plugins_url( $dirPath.'/images/sample_gage.jpg' )); ?>" alt="<?php echo esc_html('Skill Gage', 'skt-skill-bar' );?>" /><br />
                 <code>
                     [skillwrapper type="gage" align="left"]<br />
                         &nbsp;&nbsp;&nbsp;&nbsp;[skill percent="75" title="WordPress" bar_foreground="#f00" bar_background="#eee"]<br />
@@ -50,7 +50,7 @@ code{font-family:"Courier New", Courier, monospace; background:none;}
         </tr>
         <tr>
             <td>
-            	<img src="<?php echo esc_url(plugins_url( $dirPath.'/images/sample_circle.jpg' )); ?>" alt="<?php echo esc_html('Skill Circle');?>" /><br />
+            	<img src="<?php echo esc_url(plugins_url( $dirPath.'/images/sample_circle.jpg' )); ?>" alt="<?php echo esc_html('Skill Circle', 'skt-skill-bar' );?>" /><br />
                 <code>
                     [skillwrapper type="circle" track_color="#333333" chart_color="#dddddd" chart_size="550" chart_fontsize="13" chart_headingfontsize="16" align="left"]<br />
                         &nbsp;&nbsp;&nbsp;&nbsp;[skill percent="88" title="Web Research"]<br />
@@ -68,7 +68,7 @@ code{font-family:"Courier New", Courier, monospace; background:none;}
         </tr>
         <tr>
             <td>
-                <img src="<?php echo esc_url(plugins_url( $dirPath.'/images/ver-graph.jpg' )); ?>" alt="<?php echo esc_html('Skill Vertical Graph');?>" /><br />
+                <img src="<?php echo esc_url(plugins_url( $dirPath.'/images/ver-graph.jpg' )); ?>" alt="<?php echo esc_html('Skill Vertical Graph', 'skt-skill-bar' );?>" /><br />
                 
                 <code>
                     [skillwrapper type="skt_verticalgraph"]<br />
@@ -85,7 +85,7 @@ code{font-family:"Courier New", Courier, monospace; background:none;}
         </tr>
         <tr>
             <td>
-                <img src="<?php echo esc_url(plugins_url( $dirPath.'/images/pie-graph.jpg' )); ?>" alt="<?php echo esc_html('Skill Pie Graph');?>" /><br />
+                <img src="<?php echo esc_url(plugins_url( $dirPath.'/images/pie-graph.jpg' )); ?>" alt="<?php echo esc_html('Skill Pie Graph', 'skt-skill-bar' );?>" /><br />
                 <code>
                     [skillwrapper type="skt_piegraph"]<br />
                         &nbsp;&nbsp;&nbsp;&nbsp;[skill percent="51" title="WordPress" piegraph_background="#6adcfa"]<br />
@@ -101,7 +101,7 @@ code{font-family:"Courier New", Courier, monospace; background:none;}
         </tr>
         <tr>
             <td>
-                <img src="<?php echo esc_url(plugins_url( $dirPath.'/images/polar-graph.jpg' )); ?>" alt="<?php echo esc_html('Skill Polar Graph');?>" /><br />
+                <img src="<?php echo esc_url(plugins_url( $dirPath.'/images/polar-graph.jpg' )); ?>" alt="<?php echo esc_html('Skill Polar Graph', 'skt-skill-bar' );?>" /><br />
                 <code>
                     [skillwrapper type="skt_polygraph"]<br />
                         &nbsp;&nbsp;&nbsp;&nbsp;[skill percent="51" title="WordPress" polygraph_background="#6adcfa"]<br />
@@ -117,7 +117,7 @@ code{font-family:"Courier New", Courier, monospace; background:none;}
         </tr>
         <tr>
             <td>
-                <img src="<?php echo esc_url(plugins_url( $dirPath.'/images/line-graph.jpg' )); ?>" alt="<?php echo esc_html('Skill Line Graph');?>" /><br />
+                <img src="<?php echo esc_url(plugins_url( $dirPath.'/images/line-graph.jpg' )); ?>" alt="<?php echo esc_html('Skill Line Graph', 'skt-skill-bar' );?>" /><br />
                 <code>
                     [skillwrapper type="skt_linegraph"]<br />
                         &nbsp;&nbsp;&nbsp;&nbsp;[skill percent="51" title="WordPress" linegraph_background="#6adcfa"]<br />

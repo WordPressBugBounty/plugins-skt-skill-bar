@@ -1,4 +1,7 @@
 == Changelog ==
+=2.2=
+* Resolved Plugin Check (PCP) issue.
+
 =2.1=
 * Resolved plugin check and patchstack Cross-Site Scripting (XSS) attacks issue.
 

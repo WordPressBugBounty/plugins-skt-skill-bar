@@ -5,11 +5,12 @@
 * Plugin URI:  https://www.sktthemes.org
 * Author:      SKT Themes
 * Author URI:  https://www.sktthemes.org
-* Version:     2.1
+* Text Domain: skt-skill-bar
+* Version:     2.2
 * License: 	   GPLv2 or later
 * License URI: http://www.gnu.org/licenses/gpl-2.0.html
 */
-define('SB_VER','2.1');
+define('SB_VER','2.2');
 add_action('wp_print_scripts', 'sbar_register_scripts');
 add_action('wp_print_styles', 'sbar_register_styles');
 define( 'SKT_sbar_URI', plugins_url( '', __FILE__ ) );
@@ -97,7 +98,7 @@ function skillwrapper_func( $atts, $content = null ) {
 
 		case 'gage':
 			$wrapCode = '';
-			$content = strip_tags($content);
+			$content = wp_strip_all_tags( $content );
 			$start = strpos($content, '[');
 			$end = strrpos($content, '"]');
 			$len =  strlen($content);
@@ -183,7 +184,7 @@ function skillwrapper_func( $atts, $content = null ) {
  
 			case 'circle':
 			$wrapCode = '';
-			$content = strip_tags($content);
+			$content = wp_strip_all_tags($content);
 			$start = strpos($content, '[');
 			$end = strrpos($content, '"]');
 			$len =  strlen($content);
@@ -252,7 +253,7 @@ function skillwrapper_func( $atts, $content = null ) {
 
 			case 'skt_verticalgraph':
 				$wrapCode = '';
-				$content = strip_tags($content);
+				$content = wp_strip_all_tags($content);
 				$start = strpos($content, '[');
 				$end = strrpos($content, '"]');
 				$len =  strlen($content);
@@ -295,7 +296,7 @@ function skillwrapper_func( $atts, $content = null ) {
 			case 'skt_piegraph':
 
 				$wrapCode = '';
-				$content = strip_tags($content);
+				$content = wp_strip_all_tags($content);
 				$start = strpos($content, '[');
 				$end = strrpos($content, '"]');
 				$len =  strlen($content);
@@ -367,7 +368,7 @@ function skillwrapper_func( $atts, $content = null ) {
 			case 'skt_polygraph':
 
 				$wrapCode = '';
-				$content = strip_tags($content);
+				$content = wp_strip_all_tags($content);
 				$start = strpos($content, '[');
 				$end = strrpos($content, '"]');
 				$len =  strlen($content);
@@ -438,7 +439,7 @@ function skillwrapper_func( $atts, $content = null ) {
 			case 'skt_linegraph':
 
 				$wrapCode = '';
-				$content = strip_tags($content);
+				$content = wp_strip_all_tags($content);
 				$start = strpos($content, '[');
 				$end = strrpos($content, '"]');
 				$len =  strlen($content);
@@ -556,7 +557,7 @@ function skilldata_func( $atts ) {
 					<div class="chart" data-percent="'.esc_attr($percent).'">
 						<span>'.esc_attr($percent).'%</span>
 					</div>
-					<p>'.strip_tags(esc_attr($title)).'</p>
+					<p>'.wp_strip_all_tags(esc_attr($title)).'</p>
 				</div>
 			</li>';
 	}
