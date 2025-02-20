@@ -1,4 +1,7 @@
 == Changelog ==
+=2.3=
+* Resolved SKT Skill Bar Plugin Prevents Access to Customizer.
+
 =2.2=
 * Resolved Plugin Check (PCP) issue.
 

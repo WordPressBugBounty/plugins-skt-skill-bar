@@ -6,11 +6,11 @@
 * Author:      SKT Themes
 * Author URI:  https://www.sktthemes.org
 * Text Domain: skt-skill-bar
-* Version:     2.2
+* Version:     2.3
 * License: 	   GPLv2 or later
 * License URI: http://www.gnu.org/licenses/gpl-2.0.html
 */
-define('SB_VER','2.2');
+define('SB_VER','2.3');
 add_action('wp_print_scripts', 'sbar_register_scripts');
 add_action('wp_print_styles', 'sbar_register_styles');
 define( 'SKT_sbar_URI', plugins_url( '', __FILE__ ) );
@@ -33,15 +33,12 @@ function sbar_register_scripts() {
 
 		wp_register_script('gage_raphael_script', plugins_url('skill_bar/gage/raphael-2.1.4.min.js', __FILE__),'',SB_VER,false);
 		wp_enqueue_script('gage_raphael_script');
-
+		wp_register_script('chart-js-script', plugins_url('skill_bar/js/Chart.js', __FILE__),'',SB_VER,false);
+		wp_enqueue_script('chart-js-script');
+		
+		wp_register_script( 'chart.min.js-script', SKT_sbar_URI . '/skill_bar/js/chart.min.js', array( 'jquery' ),SB_VER,false);
+		wp_enqueue_script('chart.min.js-script');
 	}
-	
-	wp_register_script('chart-js-script', plugins_url('skill_bar/js/Chart.js', __FILE__),'',SB_VER,false);
-	wp_enqueue_script('chart-js-script');
-	
-	wp_register_script( 'chart.min.js-script', SKT_sbar_URI . '/skill_bar/js/chart.min.js', array( 'jquery' ),SB_VER,false);
-	wp_enqueue_script('chart.min.js-script');
-
 }
 
 function sbar_register_styles() {
