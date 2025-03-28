@@ -6,11 +6,11 @@
 * Author:      SKT Themes
 * Author URI:  https://www.sktthemes.org
 * Text Domain: skt-skill-bar
-* Version:     2.3
+* Version:     2.4
 * License: 	   GPLv2 or later
 * License URI: http://www.gnu.org/licenses/gpl-2.0.html
 */
-define('SB_VER','2.3');
+define('SB_VER','2.4');
 add_action('wp_print_scripts', 'sbar_register_scripts');
 add_action('wp_print_styles', 'sbar_register_styles');
 define( 'SKT_sbar_URI', plugins_url( '', __FILE__ ) );
@@ -479,12 +479,12 @@ function skillwrapper_func( $atts, $content = null ) {
 		        $title_json = json_encode($title);
 		        $linegraph_background_json = json_encode($linegraph_background);
 
-				$wrapCode .= '<canvas class="linegraphskill" id="toolTip'.$lineid.'" aria-label="chart" height="350" width="580" style="margin:0 auto;"></canvas>
+				$wrapCode .= '<canvas class="linegraphskill" id="toolTip'. esc_attr($lineid) .'" aria-label="chart" height="350" width="580" style="margin:0 auto;"></canvas>
 				    <script>
 			    		var xValues = '.$title_json.';
 						var yValues = '.$percentage_json.';
 						var barColors = '.$linegraph_background_json.';
-						var chartTooltip = document.getElementById("toolTip'.$lineid.'").getContext("2d");
+						var chartTooltip = document.getElementById("toolTip'. esc_attr($lineid) .'").getContext("2d");
 				     	 var toolTip = new Chart(chartTooltip, {
 				         type: "line",
 				         data: {

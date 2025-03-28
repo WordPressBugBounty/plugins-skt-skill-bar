@@ -1,4 +1,7 @@
 == Changelog ==
+=2.4=
+* Issue Resolved (Pointed by Reviewer): Authenticated (Contributor+) Stored XSS Vulnerability.
+
 =2.3=
 * Resolved SKT Skill Bar Plugin Prevents Access to Customizer.
 
