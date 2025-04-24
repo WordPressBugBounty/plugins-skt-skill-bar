@@ -1,4 +1,7 @@
 == Changelog ==
+=2.5=
+* Issue Resolved (Pointed by Reviewer): Authenticated (Contributor+) Stored XSS Vulnerability.
+
 =2.4=
 * Issue Resolved (Pointed by Reviewer): Authenticated (Contributor+) Stored XSS Vulnerability.
 

@@ -6,11 +6,11 @@
 * Author:      SKT Themes
 * Author URI:  https://www.sktthemes.org
 * Text Domain: skt-skill-bar
-* Version:     2.4
+* Version:     2.5
 * License: 	   GPLv2 or later
 * License URI: http://www.gnu.org/licenses/gpl-2.0.html
 */
-define('SB_VER','2.4');
+define('SB_VER','2.5');
 add_action('wp_print_scripts', 'sbar_register_scripts');
 add_action('wp_print_styles', 'sbar_register_styles');
 define( 'SKT_sbar_URI', plugins_url( '', __FILE__ ) );
@@ -95,63 +95,65 @@ function skillwrapper_func( $atts, $content = null ) {
 
 		case 'gage':
 			$wrapCode = '';
-			$content = wp_strip_all_tags( $content );
-			$start = strpos($content, '[');
-			$end = strrpos($content, '"]');
-			$len =  strlen($content);
-			$diff = $end - $len;
-			$content = substr( $content, $start, $diff);
-			$content = str_replace(array('[skill ', '"]', '" ]', '" ', '="' ), array('', '', '', ':', '='), $content);
+			$content  = wp_strip_all_tags( $content );
+			$start    = strpos($content, '[');
+			$end      = strrpos($content, '"]');
+			$len      =  strlen($content);
+			$diff     = $end - $len;
+			$content  = substr( $content, $start, $diff);
+			$content  = str_replace(array('[skill ', '"]', '" ]', '" ', '="' ), array('', '', '', ':', '='), $content);
 			$cntStrAr = explode( "\n", $content );
-			$numAr = array();
-			foreach($cntStrAr as $cntk => $cntv){
-				if($cntv != ''){
+			$numAr    = array();
+			foreach( $cntStrAr as $cntk => $cntv ) {
+				if( $cntv != '' ) {
 					$cnStr = str_replace( array('bar_foreground=', 'bar_background=', 'percent=', 'title='), array('','','',''), trim($cntv) );
 					$numAr[] = explode(':', $cnStr);
 				}
 			}
-
 			$wrapCode = '<style type="text/css">';
-			$cssVar = '';
-			foreach($numAr as $n => $b){ 
+			$cssVar   = '';
+			foreach( $numAr as $n => $b ) { 
 				$n++; 
 				$cssVar .= (count($numAr) == $n) ? '#g'.$n : '#g'.$n.', ';  
 			}
 			$wrapCode .= $cssVar.'{ width:200px; height:160px; display: inline-block; margin: 0.5em; }
-				#gage_chart{text-align:'.$align.';}';
+				#gage_chart{text-align:'. $align .';}';
 			$wrapCode .= '</style>';
 			$wrapCode .= '<script>';
 			$sbIds = '';
-			foreach($numAr as $n => $b){ 
+			foreach( $numAr as $n => $b ) { 
 				$n++; 
 				$sbIds .= (count($numAr) == $n) ? 'g'.$n : 'g'.$n.', ';  
 			}
 			$wrapCode .= 'var '.$sbIds.';'."\n";
 			$wrapCode .= 'function gager(){';
-				foreach($numAr as $n => $v){
-					$n++; 
-					$wrapCode .= 'var g'.$n.' = new JustGage({
-						id: "g'.$n.'", 
-						value: '.$v[0].',
-						title: "'.$v[1].'",
-						valueFontColor: "'.$v[2].'",
-						levelColors : ["'.$v[2].'"],
-						titleFontColor : "'.$v[2].'",
-						labelFontColor : "'.$v[2].'",
-						gaugeColor : "'.$v[3].'",
+				foreach ( $numAr as $n => $v ) {
+					$n++;
+					$value      = isset($v[0]) ? floatval($v[0]) : '';
+					$title      = isset($v[1]) ? sanitize_text_field($v[1]) : '';
+					$color      = isset($v[2]) ? sanitize_text_field($v[2]) : '';
+					$gaugeColor = isset($v[3]) ? sanitize_text_field($v[3]) : '';
+					$wrapCode  .= 'var g'. $n .' = new JustGage({
+						id: "g'. esc_attr( $n ) .'", 
+						value: '. $value .',
+						title: "'. $title .'",
+						valueFontColor: "'. $color .'",
+						levelColors : ["'. $color .'"],
+						titleFontColor : "'. $color .'",
+						labelFontColor : "'. $color .'",
+						gaugeColor : "'. $gaugeColor .'",
 						min: 0,
 						max: 100,
 						label: "%",
 						levelColorsGradient: false,
-						showMinMax :"hide",
-						shadowOpacity :"0.2",		
-						shadowSize : "5",  
-						startAnimationType : "easein",
+						showMinMax: "hide",
+						shadowOpacity: "0.2",		
+						shadowSize: "5",  
+						startAnimationType: "easein",
 					});'."\n";
 				}
-			$wrapCode .= '};'."\n";
-
-			$wrapCode .= 'jQuery(document).ready( function(){
+				$wrapCode .= '};'."\n";
+				$wrapCode .= 'jQuery(document).ready( function(){
 				if ( jQuery("#gage_chart").next().is(":appeared") ){
 					if (  ! jQuery("#gage_chart").hasClass("gc_active") ) {
 						gager();
