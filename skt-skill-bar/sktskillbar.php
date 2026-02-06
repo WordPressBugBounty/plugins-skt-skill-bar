@@ -6,11 +6,11 @@
 * Author:      SKT Themes
 * Author URI:  https://www.sktthemes.org
 * Text Domain: skt-skill-bar
-* Version:     2.5
+* Version:     2.6
 * License: 	   GPLv2 or later
 * License URI: http://www.gnu.org/licenses/gpl-2.0.html
 */
-define('SB_VER','2.5');
+define('SB_VER','2.6');
 add_action('wp_print_scripts', 'sbar_register_scripts');
 add_action('wp_print_styles', 'sbar_register_styles');
 define( 'SKT_sbar_URI', plugins_url( '', __FILE__ ) );
@@ -94,94 +94,118 @@ function skillwrapper_func( $atts, $content = null ) {
 			break;
 
 		case 'gage':
+			static $gage_counter = 0;
+			$gage_counter++;
+
 			$wrapCode = '';
-			$content  = wp_strip_all_tags( $content );
+			$content  = wp_strip_all_tags($content);
 			$start    = strpos($content, '[');
 			$end      = strrpos($content, '"]');
-			$len      =  strlen($content);
+			$len      = strlen($content);
 			$diff     = $end - $len;
-			$content  = substr( $content, $start, $diff);
-			$content  = str_replace(array('[skill ', '"]', '" ]', '" ', '="' ), array('', '', '', ':', '='), $content);
-			$cntStrAr = explode( "\n", $content );
+			$content  = substr($content, $start, $diff);
+			$content  = str_replace(
+				array('[skill ', '"]', '" ]', '" ', '="'),
+				array('', '', '', ':', '='),
+				$content
+			);
+
+			$cntStrAr = explode("\n", $content);
 			$numAr    = array();
-			foreach( $cntStrAr as $cntk => $cntv ) {
-				if( $cntv != '' ) {
-					$cnStr = str_replace( array('bar_foreground=', 'bar_background=', 'percent=', 'title='), array('','','',''), trim($cntv) );
+			foreach ($cntStrAr as $cntk => $cntv) {
+				if (trim($cntv) != '') {
+					$cnStr = str_replace(
+						array('bar_foreground=', 'bar_background=', 'percent=', 'title='),
+						array('', '', '', ''),
+						trim($cntv)
+					);
 					$numAr[] = explode(':', $cnStr);
 				}
 			}
-			$wrapCode = '<style type="text/css">';
-			$cssVar   = '';
-			foreach( $numAr as $n => $b ) { 
-				$n++; 
-				$cssVar .= (count($numAr) == $n) ? '#g'.$n : '#g'.$n.', ';  
+
+			// unique wrapper id
+			$gage_wrapper_id = 'gage_chart_' . $gage_counter;
+
+			$wrapCode .= '<style type="text/css">';
+			$cssVar = '';
+			foreach ($numAr as $n => $b) {
+				$n++;
+				$cssVar .= (count($numAr) == $n)
+					? '#' . $gage_wrapper_id . ' #g' . $n . '_' . $gage_counter
+					: '#' . $gage_wrapper_id . ' #g' . $n . '_' . $gage_counter . ', ';
 			}
-			$wrapCode .= $cssVar.'{ width:200px; height:160px; display: inline-block; margin: 0.5em; }
-				#gage_chart{text-align:'. $align .';}';
+			$wrapCode .= $cssVar . '{ width:200px; height:160px; display:inline-block; margin:0.5em; }
+				#' . $gage_wrapper_id . '{ text-align:' . esc_attr($align) . '; }';
 			$wrapCode .= '</style>';
+
 			$wrapCode .= '<script>';
 			$sbIds = '';
-			foreach( $numAr as $n => $b ) { 
-				$n++; 
-				$sbIds .= (count($numAr) == $n) ? 'g'.$n : 'g'.$n.', ';  
+			foreach ($numAr as $n => $b) {
+				$n++;
+				$sbIds .= (count($numAr) == $n)
+					? 'g' . $n . '_' . $gage_counter
+					: 'g' . $n . '_' . $gage_counter . ', ';
 			}
-			$wrapCode .= 'var '.$sbIds.';'."\n";
-			$wrapCode .= 'function gager(){';
-				foreach ( $numAr as $n => $v ) {
-					$n++;
-					$value      = isset($v[0]) ? floatval($v[0]) : '';
-					$title      = isset($v[1]) ? sanitize_text_field($v[1]) : '';
-					$color      = isset($v[2]) ? sanitize_text_field($v[2]) : '';
-					$gaugeColor = isset($v[3]) ? sanitize_text_field($v[3]) : '';
-					$wrapCode  .= 'var g'. $n .' = new JustGage({
-						id: "g'. esc_attr( $n ) .'", 
-						value: '. $value .',
-						title: "'. $title .'",
-						valueFontColor: "'. $color .'",
-						levelColors : ["'. $color .'"],
-						titleFontColor : "'. $color .'",
-						labelFontColor : "'. $color .'",
-						gaugeColor : "'. $gaugeColor .'",
-						min: 0,
-						max: 100,
-						label: "%",
-						levelColorsGradient: false,
-						showMinMax: "hide",
-						shadowOpacity: "0.2",		
-						shadowSize: "5",  
-						startAnimationType: "easein",
-					});'."\n";
-				}
-				$wrapCode .= '};'."\n";
-				$wrapCode .= 'jQuery(document).ready( function(){
-				if ( jQuery("#gage_chart").next().is(":appeared") ){
-					if (  ! jQuery("#gage_chart").hasClass("gc_active") ) {
-						gager();
-						jQuery("#gage_chart").addClass("gc_active");
+			$wrapCode .= 'var ' . $sbIds . ';' . "\n";
+
+			$wrapCode .= 'function gager_' . $gage_counter . '(){';
+			foreach ($numAr as $n => $v) {
+				$n++;
+				$value      = isset($v[0]) ? floatval($v[0]) : 0;
+				$title      = isset($v[1]) ? sanitize_text_field($v[1]) : '';
+				$color      = isset($v[2]) ? sanitize_text_field($v[2]) : '#000';
+				$gaugeColor = isset($v[3]) ? sanitize_text_field($v[3]) : '#eee';
+
+				$wrapCode .= 'var g' . esc_attr($n) . '_' . esc_attr($gage_counter) . ' = new JustGage({
+					id: "g' . esc_attr($n) . '_' . esc_attr($gage_counter) . '",
+					value: ' . esc_attr($value) . ',
+					title: "' . esc_attr($title) . '",
+					valueFontColor: "' . esc_attr($color) . '",
+					levelColors: ["' . esc_attr($color) . '"],
+					titleFontColor: "' . esc_attr($color) . '",
+					labelFontColor: "' . esc_attr($color) . '",
+					gaugeColor: "' . esc_attr($gaugeColor) . '",
+					min: 0,
+					max: 100,
+					label: "%",
+					levelColorsGradient: false,
+					showMinMax: "hide",
+					shadowOpacity: "0.2",
+					shadowSize: "5",
+					startAnimationType: "easein"
+				});' . "\n";
+			}
+			$wrapCode .= '};' . "\n";
+
+			$wrapCode .= 'jQuery(document).ready(function(){
+				if ( jQuery("#' . $gage_wrapper_id . '").next().is(":appeared") ){
+					if ( ! jQuery("#' . $gage_wrapper_id . '").hasClass("gc_active") ) {
+						gager_' . $gage_counter . '();
+						jQuery("#' . $gage_wrapper_id . '").addClass("gc_active");
 					}
 				} else {
-					jQuery( window ).scroll(function() {
-						if ( jQuery("#gage_chart").next().is(":appeared") ){
-							if (  ! jQuery("#gage_chart").hasClass("gc_active") ) {
-								gager();
-								jQuery("#gage_chart").addClass("gc_active");
+					jQuery(window).scroll(function(){
+						if ( jQuery("#' . $gage_wrapper_id . '").next().is(":appeared") ){
+							if ( ! jQuery("#' . $gage_wrapper_id . '").hasClass("gc_active") ) {
+								gager_' . $gage_counter . '();
+								jQuery("#' . $gage_wrapper_id . '").addClass("gc_active");
 							}
 						}
 					});
 				}
-			});
-			</script>';
-			$wrapCode .= '<div id="gage_chart">';
-			foreach($numAr as $n => $b){ 
+			});';
+			$wrapCode .= '</script>';
+
+			$wrapCode .= '<div id="' . $gage_wrapper_id . '">';
+			foreach ($numAr as $n => $b) {
 				$n++;
-				$wrapCode .= '<div id="g'.$n.'"></div>';
-			} 
+				$wrapCode .= '<div id="g' . esc_attr($n) . '_' . esc_attr($gage_counter) . '"></div>';
+			}
 			$wrapCode .= '</div>';
 			$wrapCode .= '<div style="clear:both; height:10px; overflow:hidden;"></div>';
-			break;
- 
- 
-			case 'circle':
+		break;
+
+		case 'circle':
 			$wrapCode = '';
 			$content = wp_strip_all_tags($content);
 			$start = strpos($content, '[');
@@ -189,8 +213,6 @@ function skillwrapper_func( $atts, $content = null ) {
 			$len =  strlen($content);
 			$diff = $end - $len;
 			$content = substr( $content, $start, $diff);
-		
-		
 			$content = str_replace(array('[skill ', '"]', '" ]', '" ', '="' ), array('', '', '', ':', '='), $content);
 			$cntStrAr = explode( "\n", $content );
 		
@@ -213,7 +235,6 @@ function skillwrapper_func( $atts, $content = null ) {
 			}
 		
 			$rgb_track_color = sbar_hex2rgb ( $track_color );
-		
 		
 			$wrapCode .= '<style>.sktb_pie_graph {
 			  --w:'.$chart_size.'px;
@@ -247,8 +268,6 @@ function skillwrapper_func( $atts, $content = null ) {
 		        }
 				$wrapCode .= '</div>';
 				break;
-
-
 
 			case 'skt_verticalgraph':
 				$wrapCode = '';
@@ -291,236 +310,231 @@ function skillwrapper_func( $atts, $content = null ) {
 				$wrapCode .= '</ul></div>';
 			break;
 
-
 			case 'skt_piegraph':
+
+		    $wrapCode = '';
+		    $content = wp_strip_all_tags($content);
+		    $start = strpos($content, '[');
+		    $end = strrpos($content, '"]');
+		    if ($start === false || $end === false || $end <= $start) break;
+
+		    $len  = strlen($content);
+		    $diff = $end - $len;
+		    $content = substr($content, $start, $diff);
+
+		    $content = str_replace(
+		        array('[skill ', '"]', '" ]', '" ', '="'),
+		        array('', '', '', ':', '='),
+		        $content
+		    );
+
+		    $cntStrAr = explode("\n", $content);
+
+		    $numAr = array();
+		    foreach ($cntStrAr as $cntv) {
+		        if (trim($cntv) != '') {
+		            $cnStr = str_replace(
+		                array('percent=', 'title=', 'piegraph_background=', 'piegraph_titlecolor='),
+		                array('', '', '', ''),
+		                trim($cntv)
+		            );
+		            $numAr[] = explode(':', $cnStr);
+		        }
+		    }
+
+		    $title = array();
+		    $percentage = array();
+		    $piegraph_background = array();
+
+		    foreach ($numAr as $v) {
+		        $percentage[] = floatval($v[0]);
+		        $title[] = sanitize_text_field($v[1]);
+		        $piegraph_background[] = sanitize_hex_color($v[2]) ?: '#cccccc';
+		    }
+
+		    static $chart_count = 0;
+		    $chart_count++;
+		    $chart_id = 'skt_skills_myChart_' . $chart_count;
+
+		    $wrapCode .= '<canvas id="' . esc_attr($chart_id) . '" style="width:100%;max-width:350px;height:350px; margin: 0 auto;"></canvas>';
+
+		    $percentage_json = wp_json_encode($percentage);
+		    $title_json = wp_json_encode($title);
+		    $background_json = wp_json_encode($piegraph_background);
+
+		    $wrapCode .= '<script>
+		        (function(){
+		            const ctx = document.getElementById("' . esc_js($chart_id) . '");
+		            if(!ctx) return;
+		            new Chart(ctx, {
+		                type: "pie",
+		                data: {
+		                    labels: ' . $title_json . ',
+		                    datasets: [{
+		                        backgroundColor: ' . $background_json . ',
+		                        data: ' . $percentage_json . '
+		                    }]
+		                },
+		                options: {
+		                    title: { display: false }
+		                }
+		            });
+		        })();
+		    </script>';
+
+		    break;
+
+			case 'skt_polygraph':
+			static $poly_counter = 0;
+			$poly_counter++;
+
+			$wrapCode = '';
+			$content = wp_strip_all_tags($content);
+			$start = strpos($content, '[');
+			$end = strrpos($content, '"]');
+			$len = strlen($content);
+			$diff = $end - $len;
+			$content = substr($content, $start, $diff);
+
+			$content = str_replace(array('[skill ', '"]', '" ]', '" ', '="'), array('', '', '', ':', '='), $content);
+			$cntStrAr = explode("\n", $content);
+
+			$numAr = array();
+			foreach ($cntStrAr as $cntk => $cntv) {
+				if (trim($cntv) != '') {
+					$cnStr = str_replace(
+						array('percent=', 'title=', 'polygraph_background=', 'polygraph_titlecolor='),
+						array('', '', '', ''),
+						trim($cntv)
+					);
+					$numAr[] = explode(':', $cnStr);
+				}
+			}
+
+			$title = array();
+			$percentage = array();
+			$polygraph_background = array();
+
+			foreach ($numAr as $n => $v) {
+				$percentage[] = isset($v[0]) ? ltrim(ltrim($v[0], '&nbsp;'), ' ') : 0;
+				$title[] = isset($v[1]) ? ltrim(ltrim($v[1], '&nbsp;'), ' ') : '';
+				$polygraph_background[] = isset($v[2]) ? ltrim(ltrim($v[2], '&nbsp;'), ' ') : '#000';
+			}
+
+			$percentage_json = wp_json_encode($percentage);
+			$title_json = wp_json_encode($title);
+			$polygraph_background_json = wp_json_encode($polygraph_background);
+			$canvas_id = 'skt_skills_polychart_' . esc_attr($poly_counter);
+
+			$wrapCode .= '<canvas id="' . $canvas_id . '" aria-label="chart" height="350" width="580" style="margin:0 auto;"></canvas>';
+			$wrapCode .= '<script>
+			document.addEventListener("DOMContentLoaded", function() {
+				var xValues_' . $poly_counter . ' = ' . $title_json . ';
+				var yValues_' . $poly_counter . ' = ' . $percentage_json . ';
+				var barColors_' . $poly_counter . ' = ' . $polygraph_background_json . ';
+				var chrt_' . $poly_counter . ' = document.getElementById("' . $canvas_id . '").getContext("2d");
+
+				new Chart(chrt_' . $poly_counter . ', {
+					type: "polarArea",
+					data: {
+						labels: xValues_' . $poly_counter . ',
+						datasets: [{
+							label: "",
+							data: yValues_' . $poly_counter . ',
+							backgroundColor: barColors_' . $poly_counter . '
+						}],
+					},
+					options: {
+						responsive: false
+					}
+				});
+			});
+			</script>';
+			break;
+
+			case 'skt_linegraph':
+				static $line_counter = 0;
+				$line_counter++;
 
 				$wrapCode = '';
 				$content = wp_strip_all_tags($content);
 				$start = strpos($content, '[');
 				$end = strrpos($content, '"]');
-				$len =  strlen($content);
+				$len = strlen($content);
 				$diff = $end - $len;
-				$content = substr( $content, $start, $diff);
+				$content = substr($content, $start, $diff);
 
-				$content = str_replace(array('[skill ', '"]', '" ]', '" ', '="' ), array('', '', '', ':', '='), $content);
-				$cntStrAr = explode( "\n", $content );
+				$content = str_replace(array('[skill ', '"]', '" ]', '" ', '="'), array('', '', '', ':', '='), $content);
+				$cntStrAr = explode("\n", $content);
 
 				$numAr = array();
-				foreach($cntStrAr as $cntk => $cntv){
-					if($cntv != ''){
-						$cnStr = str_replace( array( 'percent=', 'title=', 'piegraph_background=', 'piegraph_titlecolor='), array('','','',''), trim($cntv) );
+				foreach ($cntStrAr as $cntk => $cntv) {
+					if (trim($cntv) != '') {
+						$cnStr = str_replace(
+							array('percent=', 'title=', 'linegraph_background=', 'linegraph_titlecolor='),
+							array('', '', '', ''),
+							trim($cntv)
+						);
 						$numAr[] = explode(':', $cnStr);
 					}
 				}
 
-				$cssVar = '';
-				foreach($numAr as $n => $b){ 
-					$n++; 
-					$cssVar .= (count($numAr) == $n) ? '#g'.$n : '#g'.$n.', ';  
+				$title = array();
+				$percentage = array();
+				$linegraph_background = array();
+
+				foreach ($numAr as $n => $v) {
+					$percentage[] = isset($v[0]) ? ltrim(ltrim($v[0], '&nbsp;'), ' ') : 0;
+					$title[] = isset($v[1]) ? ltrim(ltrim($v[1], '&nbsp;'), ' ') : '';
+					$linegraph_background[] = isset($v[2]) ? ltrim(ltrim($v[2], '&nbsp;'), ' ') : '#000';
 				}
-				$sbIds = '';
-				foreach($numAr as $n => $b){ 
-					$n++; 
-					$sbIds .= (count($numAr) == $n) ? 'g'.$n : 'g'.$n.', ';  
-				}
 
+				$percentage_json = wp_json_encode($percentage);
+				$title_json = wp_json_encode($title);
+				$linegraph_background_json = wp_json_encode($linegraph_background);
 
-				$title =array();
-				$percentage=array();
-				$verticalgraph_background=array();
+				// Unique canvas ID for each instance
+				$canvas_id = 'toolTip' . esc_attr($line_counter);
 
-		        foreach($numAr as $n => $v){
-
-		         	$percentage[] = $v[0];
-		         	$title[] = $v[1];
-		         	$verticalgraph_background[] =$v[2];
-		        }
-		     
-		        $wrapCode .= '<canvas id="skt_skills_myChart" style="width:100%;max-width:350px;height:350px; margin: 0 auto;"></canvas>';
-		        $percentage_json = json_encode($percentage);
-		        $title_json = json_encode($title);
-		        $verticalgraph_background_json = json_encode($verticalgraph_background);
+				$wrapCode .= '<canvas class="linegraphskill" id="' . $canvas_id . '" aria-label="chart" height="350" width="580" style="margin:0 auto;"></canvas>';
 				$wrapCode .= '<script>
-					var xValues = '.$title_json.';
-					var yValues = '.$percentage_json.';
-					var barColors = '.$verticalgraph_background_json.';
-
-					new Chart("skt_skills_myChart", {
-					  type: "pie",
-					  data: {
-					    labels: xValues,
-					    datasets: [{
-					      backgroundColor: barColors,
-					      data: yValues
-					    }]
-					  },
-					  options: {
-					    title: {
-					      display: false,
-					      text: ""
-					    }
-					  }
+					document.addEventListener("DOMContentLoaded", function() {
+						var xValues_' . $line_counter . ' = ' . $title_json . ';
+						var yValues_' . $line_counter . ' = ' . $percentage_json . ';
+						var barColors_' . $line_counter . ' = ' . $linegraph_background_json . ';
+						var chartTooltip_' . $line_counter . ' = document.getElementById("' . $canvas_id . '").getContext("2d");
+						new Chart(chartTooltip_' . $line_counter . ', {
+							type: "line",
+							data: {
+								labels: xValues_' . $line_counter . ',
+								datasets: [{
+									label: "",
+									data: yValues_' . $line_counter . ',
+									backgroundColor: barColors_' . $line_counter . ',
+									borderColor: ["black"],
+									borderWidth: 1,
+									pointRadius: 5,
+								}],
+							},
+							options: {
+								responsive: false,
+								plugins: {
+									legend: {
+										display: false,
+										position: "bottom",
+										align: "center",
+										labels: {
+											color: "darkred",
+											font: { weight: "bold" }
+										}
+									}
+								}
+							}
+						});
 					});
 				</script>';
 			break;
 
-			case 'skt_polygraph':
-
-				$wrapCode = '';
-				$content = wp_strip_all_tags($content);
-				$start = strpos($content, '[');
-				$end = strrpos($content, '"]');
-				$len =  strlen($content);
-				$diff = $end - $len;
-				$content = substr( $content, $start, $diff);
-
-				$content = str_replace(array('[skill ', '"]', '" ]', '" ', '="' ), array('', '', '', ':', '='), $content);
-				$cntStrAr = explode( "\n", $content );
-
-				$numAr = array();
-				foreach($cntStrAr as $cntk => $cntv){
-					if($cntv != ''){
-						$cnStr = str_replace( array( 'percent=', 'title=', 'polygraph_background=', 'polygraph_titlecolor='), array('','','',''), trim($cntv) );
-						$numAr[] = explode(':', $cnStr);
-					}
-				}
-
-				$cssVar = '';
-				foreach($numAr as $n => $b){ 
-					$n++; 
-					$cssVar .= (count($numAr) == $n) ? '#g'.$n : '#g'.$n.', ';  
-				}
-				$sbIds = '';
-				foreach($numAr as $n => $b){ 
-					$n++; 
-
-					$sbIds .= (count($numAr) == $n) ? 'g'.$n : 'g'.$n.', ';  
-				}
-				$title =array();
-				$percentage=array();
-				$polygraph_background=array();
-
-		        foreach($numAr as $n => $v){
-		         	$percentage[] = ltrim(ltrim($v[0], '&nbsp;'), ' ');
-		         	$title[] = ltrim(ltrim($v[1], '&nbsp;'), ' ');
-		         	$polygraph_background[] = ltrim(ltrim($v[2], '&nbsp;'), ' ');
-		        }
-
-		        $percentage_json = json_encode($percentage);
-		        $title_json = json_encode($title);
-		        $polygraph_background_json = json_encode($polygraph_background);
-
-				$wrapCode .= '<canvas id="skt_skills_polychart" aria-label="chart" height="350" width="580" style="margin:0 auto;"></canvas>
-				    <script>
-					    var xValues = '.$title_json.';
-						var yValues = '.$percentage_json.';
-						var barColors = '.$polygraph_background_json.';
-
-						var chrt = document.getElementById("skt_skills_polychart").getContext("2d");
-						var chartId = new Chart(chrt, {
-						type: "polarArea",
-						data: {
-				            labels: xValues,
-				            datasets: [{
-								label: "",
-								data: yValues,
-								backgroundColor: barColors,
-				            }],
-				        },
-						options: {
-							responsive: false,
-						},
-					});
-				    </script>';
-			break;
-
-
-			case 'skt_linegraph':
-
-				$wrapCode = '';
-				$content = wp_strip_all_tags($content);
-				$start = strpos($content, '[');
-				$end = strrpos($content, '"]');
-				$len =  strlen($content);
-				$diff = $end - $len;
-				$content = substr( $content, $start, $diff);
-
-				$content = str_replace(array('[skill ', '"]', '" ]', '" ', '="' ), array('', '', '', ':', '='), $content);
-				$cntStrAr = explode( "\n", $content );
-
-				$numAr = array();
-				foreach($cntStrAr as $cntk => $cntv){
-					if($cntv != ''){
-						$cnStr = str_replace( array( 'percent=', 'title=', 'linegraph_background=', 'linegraph_titlecolor='), array('','','',''), trim($cntv) );
-						$numAr[] = explode(':', $cnStr);
-					}
-				}
-
-				$cssVar = '';
-				foreach($numAr as $n => $b){
-					$n++; 
-					$cssVar .= (count($numAr) == $n) ? '#g'.$n : '#g'.$n.', ';  
-				}
-				$sbIds = '';
-				foreach($numAr as $n => $b){
-					$n++; 
-
-					$sbIds .= (count($numAr) == $n) ? 'g'.$n : 'g'.$n.', ';  
-				}
-				$title =array();
-				$percentage=array();
-				$polygraph_background=array();
-
-		        foreach($numAr as $n => $v){
-		         	$percentage[] = ltrim(ltrim($v[0], '&nbsp;'), ' ');
-		         	$title[] = ltrim(ltrim($v[1], '&nbsp;'), ' ');
-		         	$linegraph_background[] = ltrim(ltrim($v[2], '&nbsp;'), ' ');
-		        }
-
-		        $percentage_json = json_encode($percentage);
-		        $title_json = json_encode($title);
-		        $linegraph_background_json = json_encode($linegraph_background);
-
-				$wrapCode .= '<canvas class="linegraphskill" id="toolTip'. esc_attr($lineid) .'" aria-label="chart" height="350" width="580" style="margin:0 auto;"></canvas>
-				    <script>
-			    		var xValues = '.$title_json.';
-						var yValues = '.$percentage_json.';
-						var barColors = '.$linegraph_background_json.';
-						var chartTooltip = document.getElementById("toolTip'. esc_attr($lineid) .'").getContext("2d");
-				     	 var toolTip = new Chart(chartTooltip, {
-				         type: "line",
-				         data: {
-				            labels: xValues,
-				            datasets: [{
-				               label: "",
-				               data: yValues,
-				               backgroundColor: barColors,
-				               borderColor: [
-				                  "black",
-				               ],
-				               borderWidth: 1,
-				               pointRadius: 5,
-				            }],
-				         },
-				         options: {
-				               responsive: false,
-				               plugins: {
-				                  legend: {
-				                     display: false,
-				                     position: "bottom",
-				                     align: "center",
-				                     labels: {
-				                        color: "darkred",
-				                        font: {
-				                           weight: "bold"
-				                        },
-				                     }
-				                  }
-				               }
-				            }
-				         });
-				    </script>';
-			break;
 	}
 	return $wrapCode;
 }

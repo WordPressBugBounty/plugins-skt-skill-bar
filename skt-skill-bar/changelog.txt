@@ -1,4 +1,8 @@
 == Changelog ==
+=2.6=
+* Resolved patchstack Cross-Site Scripting (XSS) attacks issue.
+* Resolved the Piegraph, Polyraph, Linegraph and Gagegraph shortcode multiple time using on same page or post.
+
 =2.5=
 * Issue Resolved (Pointed by Reviewer): Authenticated (Contributor+) Stored XSS Vulnerability.
 
