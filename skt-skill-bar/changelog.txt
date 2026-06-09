@@ -1,4 +1,18 @@
 == Changelog ==
+=2.7=
+* Added 9 new graph shortcodes:
+	Scatter Graph
+	Bubble Graph
+	Mix Graph
+	Radar Graph
+	Waterfall Graph
+	Combo Graph
+	PieDiff Graph
+	CoulmnDiff Graph
+	Stepped Area Graph
+	
+*  Fixed Wordfence Vulnerability issue (Pointed by Reviewer).
+
 =2.6=
 * Resolved patchstack Cross-Site Scripting (XSS) attacks issue.
 * Resolved the Piegraph, Polyraph, Linegraph and Gagegraph shortcode multiple time using on same page or post.

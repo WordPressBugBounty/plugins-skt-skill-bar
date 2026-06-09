@@ -156,10 +156,20 @@
   transform: translate(-50%, -50%);
 }
 
+.skt-char-bottom-title{text-align:center;padding-right: 125px;}
+
+.skt-treemap-wrapper{ width:100%; max-width:100%; overflow:hidden; }
+.skt-treemap-chart{ width:100%; min-height:350px; }
+
+
 @media screen and (max-width: 29.938em) {
 #skt_skills_polychart, .linegraphskill{ width:100% !important; height:auto !important;}	
 }
 
 @media screen and (max-width:47.938em) and (min-width:30.000em) {
 #skt_skills_polychart, .linegraphskill{ width:100% !important; height:auto !important;}	
+}
+
+@media(max-width:768px){
+  .skt-treemap-chart{ min-height:300px; }
 }
