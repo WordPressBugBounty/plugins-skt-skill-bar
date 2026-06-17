@@ -1,4 +1,17 @@
 == Changelog ==
+=2.8=
+* Added 10 new graph shortcodes:
+	3D Graph
+	Timeline Graph
+	Geo Graph
+	Datatable
+	Line Interval Graph
+	Area Graph
+	Trendline Graph
+	Bar Graph
+	Pictorial Bar
+	Water Level
+
 =2.7=
 * Added 9 new graph shortcodes:
 	Scatter Graph

@@ -6,7 +6,7 @@
 * Author:      SKT Themes
 * Author URI:  https://www.sktthemes.org
 * Text Domain: skt-skill-bar
-* Version:     2.7
+* Version:     2.8
 * License: 	   GPLv2 or later
 * License URI: http://www.gnu.org/licenses/gpl-2.0.html
 */
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define('SB_VER','2.7');
+define('SB_VER','2.8');
 add_action('wp_print_scripts', 'sbar_register_scripts');
 add_action('wp_print_styles', 'sbar_register_styles');
 define( 'SKT_sbar_URI', plugins_url( '', __FILE__ ) );
@@ -130,6 +130,36 @@ function sktskillbar_skillwrapper_func( $atts, $content = null ) {
 		'opencolor'    => '#4285F4',
 		'closecolor'   => '#FF6D01',
 		'highcolor'    => '#46BDC6',
+		'start_range_color'  => '#d6e9ff',
+		'end_range_color'    => '#4285F4',
+		'show_row_number'    => '',
+		'track_height' => '',
+		'gantt_height' => '',
+		'arrow_color' => '',
+		'arrow_width' => '',
+		'min'           => '',
+		'max'           => '',
+		'minor_ticks'   => '',
+		'green_from'    => '',
+		'green_to'      => '',
+		'yellow_from'   => '',
+		'yellow_to'     => '',
+		'red_from'      => '',
+		'red_to'        => '',
+		'gauge_width'   => '',
+		'gauge_height'  => '',
+		'live'          => '',
+		'live_interval' => '',
+		'point_color'  => '',
+		'trend_type'   => 'exponential',
+		'trend_degree' => '3',
+		'trend_color'  => '',
+		'trend_legend' => 'yes',
+		'chart_title_color' => '#333333',
+		'bar_title' => '',
+		'series' => ''
+
+
 	), $atts ) );
 
 	switch ( $type ){
@@ -516,7 +546,6 @@ function sktskillbar_skillwrapper_func( $atts, $content = null ) {
 		        });
 		    })();
 		    </script>';
-
 		break;
 
 		case 'skt_linegraph':
@@ -789,12 +818,11 @@ function sktskillbar_skillwrapper_func( $atts, $content = null ) {
 		                    x:{ grid:{ color:"rgba(0,0,0,.08)" }, ticks:{ color:"#475569" }, title:{ display:true, text:"' . esc_js( $x_label ) . '", color:"'. $border .'" } },
 		                    y:{ grid:{ color:"rgba(0,0,0,.08)" }, ticks:{ color:"#475569" }, title:{ display:true, text:"' . esc_js( $y_label ) . '", color:"'. $border .'" } }
 		                },
-		                animation:{ duration:900, easing:"easeOutQuart" }
+		                animation:{ duration:100, easing:"easeOutQuart" }
 		            }
 		        });
 		    });
 		    </script>';
-
 		break;
 
 		case 'skt_radargraph':
@@ -887,7 +915,6 @@ function sktskillbar_skillwrapper_func( $atts, $content = null ) {
 			);
 
 			</script>';
-
 		break;
 
 		case 'skt_mixchart':
@@ -967,7 +994,6 @@ function sktskillbar_skillwrapper_func( $atts, $content = null ) {
 		    });
 
 		    </script>';
-
 		break;
 
 		case 'skt_waterfallchart':
@@ -1261,7 +1287,6 @@ function sktskillbar_skillwrapper_func( $atts, $content = null ) {
 		        });
 		    })();
 		    </script>';
-
 		break;
 
 		case 'skt_piediff':
@@ -1339,7 +1364,6 @@ function sktskillbar_skillwrapper_func( $atts, $content = null ) {
 		    });
 
 		    </script>';
-
 		break;
 
 		case 'skt_columndiff':
@@ -1465,7 +1489,6 @@ function sktskillbar_skillwrapper_func( $atts, $content = null ) {
 		        });
 		    })();
 		    </script>';
-
 		break;
 
 		case 'skt_steppedarea':
@@ -1613,14 +1636,1179 @@ function sktskillbar_skillwrapper_func( $atts, $content = null ) {
 		        });
 		    })();
 		    </script>';
-
 		break;
-		
+
+		case 'skt_pie3d':
+		    static $pie3d_counter = 0;
+		    $pie3d_counter++;
+		    $wrapCode = '';
+		    $chart_id = 'pie3d_' . $pie3d_counter;
+
+		    $chart_title = ! empty( $chart_title ) ? sanitize_text_field( $chart_title ) : '';
+		    $text_color  = ! empty( $text_color )  ? sanitize_text_field( $text_color )  : '#333333';
+
+		    preg_match_all( '/\[skill\s+([^\]]+)\]/', $content, $skill_matches, PREG_SET_ORDER );
+
+		    $chartData = array( array( 'Label', 'Value' ) );
+		    $slices    = array();
+
+		    foreach ( $skill_matches as $sk ) {
+		        preg_match_all( '/(\w+)="([^"]*)"/', $sk[1], $attrs, PREG_SET_ORDER );
+		        $pairs = array();
+		        foreach ( $attrs as $a ) {
+		        	$pairs[ $a[1] ] = $a[2];
+		        }
+		        $label = isset( $pairs['title'] ) ? sanitize_text_field( $pairs['title'] ) : '';
+		        $value = isset( $pairs['value'] ) ? (float) $pairs['value'] : 0;
+		        $chartData[] = array( $label, $value );
+
+		        $color = '';
+		        if ( isset( $pairs['backgroundcolr'] ) ) {
+		            $color = sanitize_text_field( $pairs['backgroundcolr'] );
+		        } elseif ( isset( $pairs['backgroundcolor'] ) ) {
+		            $color = sanitize_text_field( $pairs['backgroundcolor'] );
+		        } elseif ( isset( $pairs['color'] ) ) {
+		            $color = sanitize_text_field( $pairs['color'] );
+		        }
+
+		        $slices[] = ( $color !== '' ) ? array( 'color' => $color ) : (object) array();
+		    }
+
+		    if ( count( $chartData ) < 2 ) {
+		        return '';
+		    }
+
+		    $wrapCode .= '
+		    <div class="skt-pie3d-wrap" style="position:relative;width:100%;max-width:900px;margin:0 auto;">
+		        <div id="' . esc_attr( $chart_id ) . '" style="width:100%;"></div>
+		    </div>
+		    <script>
+		    (function(){
+		        window.sktPie3dCharts = window.sktPie3dCharts || [];
+
+		        google.charts.load("current", {packages:["corechart"]});
+		        google.charts.setOnLoadCallback(function(){
+
+		            var el = document.getElementById("' . esc_js( $chart_id ) . '");
+		            if(!el){ return; }
+
+		            var data   = google.visualization.arrayToDataTable(' . wp_json_encode( $chartData ) . ');
+		            var chart  = new google.visualization.PieChart(el);
+		            var SLICES = ' . wp_json_encode( $slices ) . ';
+
+		            function draw(){
+		                var w = el.clientWidth || el.offsetWidth || 600;
+		                var h = Math.round(Math.max(300, Math.min(500, w * 0.6)));
+		                var small = w < 480;
+
+		                chart.draw(data, {
+		                    title: ' . wp_json_encode( $chart_title ) . ',
+		                    is3D: true,
+		                    height: h,
+		                    backgroundColor: { fill: "transparent" },
+		                    titleTextStyle: { color: "' . esc_js( $text_color ) . '", fontSize: small ? 15 : 18 },
+		                    legend: { textStyle: { color: "' . esc_js( $text_color ) . '", fontSize: small ? 11 : 13 } },
+		                    chartArea: { width: "90%", height: "80%" },
+		                    slices: SLICES
+		                });
+		            }
+
+		            draw();
+		            window.sktPie3dCharts.push(draw);
+
+		            if(!window.sktPie3dResizeBound){
+		                window.sktPie3dResizeBound = true;
+		                var t;
+		                window.addEventListener("resize", function(){
+		                    clearTimeout(t);
+		                    t = setTimeout(function(){ window.sktPie3dCharts.forEach(function(fn){ fn(); }); }, 200);
+		                });
+		            }
+		        });
+		    })();
+		    </script>';
+		break;
+
+		case 'skt_timeline':
+		    static $timeline_counter = 0;
+		    $timeline_counter++;
+
+		    $wrapCode = '';
+		    $chart_id = 'timeline_' . $timeline_counter;
+
+		    $chart_title = ! empty( $chart_title ) ? sanitize_text_field( $chart_title ) : '';
+
+		    preg_match_all( '/\[skill\s+([^\]]+)\]/', $content, $skill_matches, PREG_SET_ORDER );
+
+		    $rows = array();
+
+		    foreach ( $skill_matches as $sk ) {
+
+		        preg_match_all( '/(\w+)="([^"]*)"/', $sk[1], $attrs, PREG_SET_ORDER );
+
+		        $pairs = array();
+
+		        foreach ( $attrs as $a ) {
+		            $pairs[ $a[1] ] = $a[2];
+		        }
+
+		        $term  = isset( $pairs['title'] ) ? sanitize_text_field( $pairs['title'] ) : '';
+		        $name  = isset( $pairs['name'] ) ? sanitize_text_field( $pairs['name'] ) : '';
+		        $start = isset( $pairs['start'] ) ? $pairs['start'] : '';
+		        $end   = isset( $pairs['end'] ) ? $pairs['end'] : '';
+
+		        if ( empty( $start ) || empty( $end ) ) {
+		            continue;
+		        }
+
+		        $start_ts = strtotime( $start );
+		        $end_ts   = strtotime( $end );
+
+		        if ( ! $start_ts || ! $end_ts ) {
+		            continue;
+		        }
+
+		        $rows[] = array(
+		            $term,
+		            $name,
+		            array(
+		                'year'  => (int) gmdate( 'Y', $start_ts ),
+		                'month' => (int) gmdate( 'n', $start_ts ) - 1,
+		                'day'   => (int) gmdate( 'j', $start_ts ),
+		            ),
+		            array(
+		                'year'  => (int) gmdate( 'Y', $end_ts ),
+		                'month' => (int) gmdate( 'n', $end_ts ) - 1,
+		                'day'   => (int) gmdate( 'j', $end_ts ),
+		            ),
+		        );
+		    }
+
+		    if ( empty( $rows ) ) {
+		        return '';
+		    }
+
+		    $wrapCode .= '
+		    <div class="skt-timeline-wrap" style="position:relative;width:100%;">
+		    	<div>
+		    		<div class="skt-timeline-heading" style="color:'. $chart_title_color .'">' . esc_attr( $chart_title ) . '</div>
+		        	<div id="' . esc_attr( $chart_id ) . '" style="width:100%;"></div>
+		        </div>
+		    </div>
+
+		    <script>
+		    (function(){
+
+		        window.sktTimelineCharts = window.sktTimelineCharts || [];
+
+		        google.charts.load("current", {packages:["timeline"]});
+
+		        google.charts.setOnLoadCallback(function(){
+
+		            var el = document.getElementById("' . esc_js( $chart_id ) . '");
+
+		            if(!el){
+		                return;
+		            }
+
+		            var chart = new google.visualization.Timeline(el);
+
+		            var ROWS = ' . wp_json_encode( $rows ) . ';
+
+		            function draw(){
+
+		                var dataTable = new google.visualization.DataTable();
+
+		                dataTable.addColumn({ type: "string", id: "Term" });
+		                dataTable.addColumn({ type: "string", id: "Name" });
+		                dataTable.addColumn({ type: "date", id: "Start" });
+		                dataTable.addColumn({ type: "date", id: "End" });
+
+		                ROWS.forEach(function(row){
+
+		                    dataTable.addRow([
+		                        row[0],
+		                        row[1],
+		                        new Date(
+		                            row[2].year,
+		                            row[2].month,
+		                            row[2].day
+		                        ),
+		                        new Date(
+		                            row[3].year,
+		                            row[3].month,
+		                            row[3].day
+		                        )
+		                    ]);
+
+		                });
+
+		                var w = el.clientWidth || 600;
+		                var h = Math.max(200, ROWS.length * 50);
+
+		                chart.draw(dataTable, {
+		                    height: h
+		                });
+		            }
+
+		            draw();
+
+		            window.sktTimelineCharts.push(draw);
+
+		            if(!window.sktTimelineResizeBound){
+
+		                window.sktTimelineResizeBound = true;
+
+		                var timer;
+
+		                window.addEventListener("resize", function(){
+
+		                    clearTimeout(timer);
+
+		                    timer = setTimeout(function(){
+
+		                        window.sktTimelineCharts.forEach(function(fn){
+		                            fn();
+		                        });
+
+		                    }, 200);
+
+		                });
+		            }
+
+		        });
+
+		    })();
+		    </script>';
+		break;
+
+		case 'skt_geochart':
+
+		    static $geochart_counter = 0;
+		    $geochart_counter++;
+		    $wrapCode = '';
+		    $chart_id = 'geochart_' . $geochart_counter;
+
+		    $chart_title = ! empty( $chart_title ) ? sanitize_text_field( $chart_title ) : '';
+		    $text_color  = ! empty( $text_color ) ? sanitize_text_field( $text_color ) : '#333333';
+		    preg_match_all( '/\[skill\s+([^\]]+)\]/', $content, $skill_matches, PREG_SET_ORDER );
+		    $chartData = array(
+		        array( 'Country', 'Popularity' )
+		    );
+
+		    foreach ( $skill_matches as $sk ) {
+		        preg_match_all( '/(\w+)="([^"]*)"/', $sk[1], $attrs, PREG_SET_ORDER );
+		        $pairs = array();
+		        foreach ( $attrs as $a ) {
+		            $pairs[ $a[1] ] = $a[2];
+		        }
+		        $country = isset( $pairs['country'] ) ? sanitize_text_field( $pairs['country'] ) : '';
+		        $value = isset( $pairs['value'] ) ? (float) $pairs['value'] : 0;
+		        if ( $country === '' ) {
+		            continue;
+		        }
+		        $chartData[] = array(
+		            $country,
+		            $value
+		        );
+		    }
+
+		    if ( count( $chartData ) < 2 ) {
+		        return '';
+		    }
+
+		    $wrapCode .= '
+		    <div class="skt-geochart-wrap" style="position:relative;width:100%;max-width:1000px;margin:0 auto;">
+		    	<div style="color:'. $chart_title_color .'">' . esc_attr( $chart_title ) . '</div>
+		        <div id="' . esc_attr( $chart_id ) . '" style="width:100%;"></div>
+		    </div>
+
+		    <script>
+		    (function(){
+		        window.sktGeoCharts = window.sktGeoCharts || [];
+		        google.charts.load("current", {
+		            packages:["geochart"]
+		        });
+
+		        google.charts.setOnLoadCallback(function(){
+		            var el = document.getElementById("' . esc_js( $chart_id ) . '");
+
+		            if(!el){
+		                return;
+		            }
+		            var data = google.visualization.arrayToDataTable(
+		                ' . wp_json_encode( $chartData ) . '
+		            );
+		            var chart = new google.visualization.GeoChart(el);
+		            function draw(){
+		                var w = el.clientWidth || el.offsetWidth || 800;
+		                var h = Math.round(
+		                    Math.max(
+		                        300,
+		                        Math.min(600, w * 0.60)
+		                    )
+		                );
+
+		                chart.draw(data, {
+		                    height: h,
+		                    backgroundColor: {
+		                        fill: "transparent"
+		                    },
+
+		                    datalessRegionColor: "#f5f5f5",
+		                    defaultColor: "#e5e5e5",
+
+		                    colorAxis: {
+		                        colors: [
+		                            "'. esc_attr( $start_range_color ) .'",
+		                            "'. esc_attr( $end_range_color ) .'"
+		                        ]
+		                    },
+
+		                    legend: {
+		                        textStyle: {
+		                            color: "' . esc_js( $text_color ) . '"
+		                        }
+		                    },
+
+		                    tooltip: {
+		                        textStyle: {
+		                            color: "#000000"
+		                        }
+		                    }
+		                });
+		            }
+		            draw();
+
+		            window.sktGeoCharts.push(draw);
+		            if(!window.sktGeoResizeBound){
+		                window.sktGeoResizeBound = true;
+		                var resizeTimer;
+		                window.addEventListener("resize", function(){
+		                    clearTimeout(resizeTimer);
+		                    resizeTimer = setTimeout(function(){
+		                        window.sktGeoCharts.forEach(function(fn){
+		                            fn();
+		                        });
+
+		                    }, 200);
+		                });
+		            }
+		        });
+
+		    })();
+		    </script>';
+		break;
+
+		case 'skt_datatable':
+		    static $dt_counter = 0;
+		    $dt_counter++;
+		    $wrapCode = '';
+		    $table_id = 'datatable_' . $dt_counter;
+
+		    $show_row_number = ( isset( $show_row_number ) && $show_row_number === 'yes' );
+
+		    $col_defs = array();
+		    if ( ! empty( $columns ) ) {
+		        foreach ( explode( '|', $columns ) as $c ) {
+		            $parts = explode( ':', $c );
+		            $name  = isset( $parts[0] ) ? sanitize_text_field( trim( $parts[0] ) ) : '';
+		            $type  = isset( $parts[1] ) ? strtolower( trim( $parts[1] ) ) : null;  // null = auto-detect
+		            if ( $type !== null && ! in_array( $type, array( 'string', 'number', 'boolean', 'date' ), true ) ) {
+		                $type = null;
+		            }
+		            $col_defs[] = array( 'label' => $name, 'type' => $type );
+		        }
+		    }
+
+		    preg_match_all( '/\[skill\s+([^\]]+)\]/', $content, $skill_matches, PREG_SET_ORDER );
+		    $raw_rows = array();
+		    $maxc = 0;
+		    foreach ( $skill_matches as $sk ) {
+		        preg_match_all( '/(\w+)="([^"]*)"/', $sk[1], $attrs, PREG_SET_ORDER );
+		        $pairs = array();
+		        foreach ( $attrs as $a ) { $pairs[ $a[1] ] = $a[2]; }
+		        if ( ! isset( $pairs['values'] ) ) { continue; }
+		        $vals = array_map( 'trim', explode( '|', $pairs['values'] ) );
+		        $maxc = max( $maxc, count( $vals ) );
+		        $raw_rows[] = $vals;
+		    }
+
+		    if ( empty( $col_defs ) ) {
+		        for ( $i = 0; $i < $maxc; $i++ ) {
+		            $col_defs[] = array( 'label' => 'Column ' . ( $i + 1 ), 'type' => null );
+		        }
+		    }
+
+		    if ( empty( $col_defs ) || empty( $raw_rows ) ) {
+		        return '';
+		    }
+
+		    foreach ( $col_defs as $i => $col ) {
+		        if ( $col['type'] !== null ) { continue; }
+
+		        $any = false; $all_num = true; $boolish = true; $has_text_bool = false;
+		        foreach ( $raw_rows as $vals ) {
+		            $v = isset( $vals[ $i ] ) ? $vals[ $i ] : '';
+		            if ( strpos( $v, '::' ) !== false ) { $p = explode( '::', $v, 2 ); $v = trim( $p[0] ); }
+		            if ( $v === '' ) { continue; }
+		            $any = true;
+		            $lower = strtolower( $v );
+
+		            if ( ! in_array( $lower, array( 'true', 'false', 'yes', 'no', '1', '0' ), true ) ) { $boolish = false; }
+		            if ( in_array( $lower, array( 'true', 'false', 'yes', 'no' ), true ) ) { $has_text_bool = true; }
+
+		            $looks_id = ( ctype_digit( $v ) && ( strlen( $v ) >= 8 || ( $v[0] === '0' && strlen( $v ) > 1 ) ) );
+		            if ( ! is_numeric( $v ) || $looks_id ) { $all_num = false; }
+		        }
+
+		        if ( ! $any )                          { $col_defs[ $i ]['type'] = 'string'; }
+		        elseif ( $boolish && $has_text_bool )  { $col_defs[ $i ]['type'] = 'boolean'; }
+		        elseif ( $all_num )                    { $col_defs[ $i ]['type'] = 'number'; }
+		        else                                   { $col_defs[ $i ]['type'] = 'string'; }
+		    }
+
+		    $js_rows = array();
+		    foreach ( $raw_rows as $vals ) {
+		        $row = array();
+		        foreach ( $col_defs as $i => $col ) {
+		            $raw = isset( $vals[ $i ] ) ? $vals[ $i ] : '';
+		            $fmt = null;
+		            if ( strpos( $raw, '::' ) !== false ) {
+		                $p   = explode( '::', $raw, 2 );
+		                $raw = trim( $p[0] );
+		                $fmt = trim( $p[1] );
+		            }
+		            switch ( $col['type'] ) {
+		                case 'number':
+		                    $n     = (float) $raw;
+		                    $typed = ( $n == (int) $n ) ? (int) $n : $n;
+		                    break;
+		                case 'boolean':
+		                    $typed = in_array( strtolower( $raw ), array( 'true', '1', 'yes' ), true );
+		                    break;
+		                default:
+		                    $typed = sanitize_text_field( $raw );
+		            }
+		            $row[] = ( $fmt !== null && $fmt !== '' )
+		                ? array( 'v' => $typed, 'f' => sanitize_text_field( $fmt ) )
+		                : $typed;
+		        }
+		        $js_rows[] = $row;
+		    }
+
+		    $wrapCode .= '
+		    <div class="skt-dt-wrap" style="width:100%;overflow-x:auto;">
+		        <div id="' . esc_attr( $table_id ) . '"></div>
+		    </div>
+		    <script>
+		    (function(){
+		        window.sktDtTables = window.sktDtTables || [];
+
+		        google.charts.load("current", {packages:["table"]});
+		        google.charts.setOnLoadCallback(function(){
+
+		            var el = document.getElementById("' . esc_js( $table_id ) . '");
+		            if(!el){ return; }
+
+		            var data = new google.visualization.DataTable();
+		            var COLS = ' . wp_json_encode( $col_defs ) . ';
+		            COLS.forEach(function(c){ data.addColumn(c.type, c.label); });
+		            data.addRows(' . wp_json_encode( $js_rows ) . ');
+
+		            var table = new google.visualization.Table(el);
+
+		            function draw(){
+		                table.draw(data, {
+		                    showRowNumber: ' . ( $show_row_number ? 'true' : 'false' ) . ',
+		                    width: "100%",
+		                    height: "100%",
+		                    allowHtml: true
+		                });
+		            }
+
+		            draw();
+		            window.sktDtTables.push(draw);
+
+		            if(!window.sktDtResizeBound){
+		                window.sktDtResizeBound = true;
+		                var t;
+		                window.addEventListener("resize", function(){
+		                    clearTimeout(t);
+		                    t = setTimeout(function(){ window.sktDtTables.forEach(function(fn){ fn(); }); }, 200);
+		                });
+		            }
+		        });
+		    })();
+		    </script>';
+		break;
+
+		case 'skt_lineinterval':
+
+		    static $interval_counter = 0;
+		    $interval_counter++;
+
+		    $wrapCode = '';
+
+		    $chart_id = 'lineinterval_' . $interval_counter;
+
+		    $chart_title = ! empty( $chart_title ) ? sanitize_text_field( $chart_title ) : 'Line Intervals Chart';
+
+		    preg_match_all(
+		        '/\[skill\s+([^\]]+)\]/',
+		        $content,
+		        $skill_matches,
+		        PREG_SET_ORDER
+		    );
+
+		    $chartData = array();
+		    $max_intervals = 0;
+
+		    foreach ( $skill_matches as $sk ) {
+
+		        preg_match_all(
+		            '/(\w+)="([^"]*)"/',
+		            $sk[1],
+		            $attrs,
+		            PREG_SET_ORDER
+		        );
+
+		        $pairs = array();
+
+		        foreach ( $attrs as $a ) {
+		            $pairs[ $a[1] ] = $a[2];
+		        }
+
+		        $row = array();
+
+		        $row[] = isset( $pairs['x'] ) ? (float) $pairs['x'] : 0;
+		        $row[] = isset( $pairs['value'] ) ? (float) $pairs['value'] : 0;
+
+		        $intervals = array();
+
+		        foreach ( $pairs as $key => $val ) {
+
+		            if ( preg_match( '/^interval(\d+)$/', $key ) ) {
+		                $intervals[] = (float) $val;
+		            }
+		        }
+
+		        sort( $intervals );
+
+		        $max_intervals = max( $max_intervals, count( $intervals ) );
+
+		        $row = array_merge( $row, $intervals );
+
+		        $chartData[] = $row;
+		    }
+
+		    if ( empty( $chartData ) ) {
+		        return '';
+		    }
+
+		    $wrapCode .= '
+		    <div class="skt-lineinterval-wrap" style="position:relative;width:100%;max-width:900px;margin:0 auto;">
+		        <div id="' . esc_attr( $chart_id ) . '" style="width:100%;"></div>
+		    </div>
+
+		    <script>
+		    (function(){
+
+		        window.sktLineIntervalCharts = window.sktLineIntervalCharts || [];
+
+		        google.charts.load("current", {
+		            packages:["corechart"]
+		        });
+
+		        google.charts.setOnLoadCallback(function(){
+
+		            var el = document.getElementById("' . esc_js( $chart_id ) . '");
+
+		            if(!el){
+		                return;
+		            }
+
+		            var ROWS = ' . wp_json_encode( $chartData ) . ';
+		            var INTERVAL_COUNT = ' . (int) $max_intervals . ';
+
+		            function draw(){
+
+		                var data = new google.visualization.DataTable();
+
+		                data.addColumn("number", "X");
+		                data.addColumn("number", "Values");
+
+		                for(var i = 0; i < INTERVAL_COUNT; i++){
+
+		                    data.addColumn({
+		                        id: "i" + i,
+		                        type: "number",
+		                        role: "interval"
+		                    });
+
+		                }
+
+		                ROWS.forEach(function(row){
+
+		                    var r = row.slice();
+
+		                    while(r.length < (2 + INTERVAL_COUNT)){
+		                        r.push(null);
+		                    }
+
+		                    data.addRow(r);
+
+		                });
+
+		                var w = el.clientWidth || 600;
+		                var h = Math.max(300, Math.min(500, w * 0.6));
+
+		                var chart = new google.visualization.LineChart(el);
+
+		                chart.draw(data, {
+
+		                    title: ' . wp_json_encode( $chart_title ) . ',
+
+		                    curveType: "function",
+
+		                    lineWidth: 4,
+
+		                    intervals: {
+		                        style: "line"
+		                    },
+
+		                    legend: "none",
+
+		                    height: h,
+
+		                    chartArea: {
+		                        width: "85%",
+		                        height: "75%"
+		                    }
+		                });
+
+		            }
+
+		            draw();
+
+		            window.sktLineIntervalCharts.push(draw);
+
+		            if(!window.sktLineIntervalResizeBound){
+
+		                window.sktLineIntervalResizeBound = true;
+
+		                var timer;
+
+		                window.addEventListener("resize", function(){
+
+		                    clearTimeout(timer);
+
+		                    timer = setTimeout(function(){
+
+		                        window.sktLineIntervalCharts.forEach(function(fn){
+		                            fn();
+		                        });
+
+		                    }, 200);
+
+		                });
+
+		            }
+
+		        });
+
+		    })();
+		    </script>';
+		break;
+
+
+		case 'skt_areachart':
+
+		    static $area_counter = 0;
+		    $area_counter++;
+
+		    $wrapCode = '';
+
+		    $chart_id = 'areachart_' . $area_counter;
+
+		    $raw         = ( isset( $atts ) && is_array( $atts ) ) ? $atts : array();
+			$chart_title = ! empty( $raw['chart_title'] ) ? sanitize_text_field( $raw['chart_title'] )
+			             : ( ! empty( $chart_title ) ? sanitize_text_field( $chart_title ) : 'Area Chart' );
+			$haxis_title = ! empty( $raw['haxis_title'] ) ? sanitize_text_field( $raw['haxis_title'] )
+             : ( ! empty( $haxis_title ) ? sanitize_text_field( $haxis_title ) : '' );
+
+		    preg_match_all(
+		        '/\[skill\s+([^\]]+)\]/',
+		        $content,
+		        $skill_matches,
+		        PREG_SET_ORDER
+		    );
+
+		    $chartData = array(
+		        array( 'Year', 'Sales', 'Expenses' )
+		    );
+
+		    foreach ( $skill_matches as $sk ) {
+
+		        preg_match_all(
+		            '/(\w+)="([^"]*)"/',
+		            $sk[1],
+		            $attrs,
+		            PREG_SET_ORDER
+		        );
+
+		        $pairs = array();
+
+		        foreach ( $attrs as $a ) {
+		            $pairs[ $a[1] ] = $a[2];
+		        }
+
+		        $chartData[] = array(
+		            isset( $pairs['year'] ) ? $pairs['year'] : '',
+		            isset( $pairs['sales'] ) ? (float) $pairs['sales'] : 0,
+		            isset( $pairs['expenses'] ) ? (float) $pairs['expenses'] : 0
+		        );
+		    }
+
+		    if ( count( $chartData ) < 2 ) {
+		        return '';
+		    }
+
+		    $wrapCode .= '
+		    <div class="skt-areachart-wrap" style="position:relative;width:100%;max-width:1000px;margin:0 auto;">
+		        <div id="' . esc_attr( $chart_id ) . '" style="width:100%;"></div>
+		    </div>
+
+		    <script>
+			    (function(){
+			        window.sktAreaCharts = window.sktAreaCharts || [];
+			        google.charts.load("current", {
+			            packages:["corechart"]
+			        });
+			        google.charts.setOnLoadCallback(function(){
+			            var el = document.getElementById("' . esc_js( $chart_id ) . '");
+			            if(!el){
+			                return;
+			            }
+			            var data = google.visualization.arrayToDataTable(
+			                ' . wp_json_encode( $chartData ) . '
+			            );
+			            var chart = new google.visualization.AreaChart(el);
+			            function draw(){
+			                var w = el.clientWidth || 600;
+			                var h = Math.max(300, Math.min(500, w * 0.6));
+			                chart.draw(data, {
+							    title: ' . wp_json_encode( $chart_title ) . ',
+							    titleTextStyle: { color: "' . $color_label . '" },
+							    hAxis: {
+							        title: ' . wp_json_encode( $haxis_title ) . ',
+							        titleTextStyle: { color: "' . $color_label . '" }
+							    },
+							    vAxis: { minValue: 0 },
+							    height: h,
+							    legend: { position: "bottom" },
+							    chartArea: { width: "85%", height: "70%" }
+							});
+			            }
+			            draw();
+			            window.sktAreaCharts.push(draw);
+			            if(!window.sktAreaResizeBound){
+			                window.sktAreaResizeBound = true;
+			                var timer;
+			                window.addEventListener("resize", function(){
+			                    clearTimeout(timer);
+			                    timer = setTimeout(function(){
+			                        window.sktAreaCharts.forEach(function(fn){
+			                            fn();
+			                        });
+
+			                    }, 200);
+
+			                });
+
+			            }
+			        });
+			    })();
+			</script>';
+		break;
+
+		case 'skt_trendline':
+		    static $trend_counter = 0;
+		    $trend_counter++;
+		    $wrapCode = '';
+		    $chart_id = 'trendline_' . $trend_counter;
+
+		    $chart_title = ! empty( $chart_title ) ? sanitize_text_field( $chart_title ) : '';
+		    $x_label     = ! empty( $x_label )     ? sanitize_text_field( $x_label )     : 'X';
+		    $y_label     = ! empty( $y_label )     ? sanitize_text_field( $y_label )     : 'Y';
+		    $text_color  = ! empty( $text_color )  ? sanitize_text_field( $text_color )  : '#333333';
+		    $point_color = ! empty( $point_color ) ? sanitize_text_field( $point_color ) : '';
+
+		    $trend_type = ! empty( $trend_type ) ? strtolower( sanitize_text_field( $trend_type ) ) : 'linear';
+		    if ( ! in_array( $trend_type, array( 'linear', 'polynomial', 'exponential' ), true ) ) {
+		        $trend_type = 'linear';
+		    }
+		    $trend_degree = ! empty( $trend_degree ) ? (int) $trend_degree : 3;
+		    $trend_color  = ! empty( $trend_color )  ? sanitize_text_field( $trend_color ) : '';
+		    $trend_legend = ( isset( $trend_legend ) && $trend_legend === 'yes' );
+
+		    preg_match_all( '/\[skill\s+([^\]]+)\]/', $content, $skill_matches, PREG_SET_ORDER );
+		    $chartData = array( array( $x_label, $y_label ) );
+		    foreach ( $skill_matches as $sk ) {
+		        preg_match_all( '/(\w+)="([^"]*)"/', $sk[1], $attrs, PREG_SET_ORDER );
+		        $pairs = array();
+		        foreach ( $attrs as $a ) { $pairs[ $a[1] ] = $a[2]; }
+
+		        $x = isset( $pairs['x'] ) ? (float) $pairs['x'] : 0;
+		        $y = isset( $pairs['y'] ) ? (float) $pairs['y'] : 0;
+		        $chartData[] = array( $x, $y );
+		    }
+
+		    if ( count( $chartData ) < 2 ) {
+		        return '';
+		    }
+
+		    $wrapCode .= '
+		    <div class="skt-trend-wrap" style="position:relative;width:100%;max-width:900px;margin:0 auto;">
+		        <div id="' . esc_attr( $chart_id ) . '" style="width:100%;"></div>
+		    </div>
+		    <script>
+		    (function(){
+		        window.sktTrendCharts = window.sktTrendCharts || [];
+
+		        google.charts.load("current", {packages:["corechart"]});
+		        google.charts.setOnLoadCallback(function(){
+
+		            var el = document.getElementById("' . esc_js( $chart_id ) . '");
+		            if(!el){ return; }
+
+		            var data  = google.visualization.arrayToDataTable(' . wp_json_encode( $chartData ) . ');
+		            var chart = new google.visualization.ScatterChart(el);
+
+		            function draw(){
+		                var w = el.clientWidth || el.offsetWidth || 600;
+		                var h = Math.round(Math.max(320, Math.min(520, w * 0.55)));
+		                var small = w < 520;
+
+		                var trend = {
+		                    type: "' . esc_js( $trend_type ) . '",
+		                    visibleInLegend: ' . ( $trend_legend ? 'true' : 'false' ) . '
+		                };
+		                ' . ( $trend_type === 'polynomial' ? 'trend.degree = ' . (int) $trend_degree . ';' : '' ) . '
+		                ' . ( $trend_color !== '' ? 'trend.color = ' . wp_json_encode( $trend_color ) . ';' : '' ) . '
+
+		                var o = {
+		                    title: ' . wp_json_encode( $chart_title ) . ',
+		                    height: h,
+		                    legend: ' . ( $trend_legend ? '{ position: "top", textStyle: { color: "' . esc_js( $text_color ) . '" } }' : '"none"' ) . ',
+		                    crosshair: { trigger: "both", orientation: "both" },
+		                    pointSize: small ? 5 : 7,
+		                    backgroundColor: { fill: "transparent" },
+		                    titleTextStyle: { color: "' . esc_js( $text_color ) . '", fontSize: small ? 14 : 18 },
+		                    hAxis: { title: ' . wp_json_encode( $x_label ) . ', textStyle: { color: "' . esc_js( $text_color ) . '" }, titleTextStyle: { color: "' . esc_js( $text_color ) . '" } },
+		                    vAxis: { title: ' . wp_json_encode( $y_label ) . ', textStyle: { color: "' . esc_js( $text_color ) . '" }, titleTextStyle: { color: "' . esc_js( $text_color ) . '" } },
+		                    trendlines: { 0: trend }
+		                };
+		                ' . ( $point_color !== '' ? 'o.colors = [ ' . wp_json_encode( $point_color ) . ' ];' : '' ) . '
+
+		                chart.draw(data, o);
+		            }
+
+		            draw();
+		            window.sktTrendCharts.push(draw);
+
+		            if(!window.sktTrendResizeBound){
+		                window.sktTrendResizeBound = true;
+		                var t;
+		                window.addEventListener("resize", function(){
+		                    clearTimeout(t);
+		                    t = setTimeout(function(){ window.sktTrendCharts.forEach(function(fn){ fn(); }); }, 200);
+		                });
+		            }
+		        });
+		    })();
+		    </script>';
+		break;
+
+		case 'skt_bar':
+
+			static $bar_counter = 0;
+			$bar_counter++;
+			$wrapCode = '';
+			$chart_id = 'bar_' . $bar_counter;
+
+			$bar_title   = isset( $bar_title ) ? sanitize_text_field( $bar_title )
+			             : ( isset( $title ) ? sanitize_text_field( $title ) : '' );
+			$direction   = ( isset( $direction ) && strtolower( $direction ) === 'vertical' ) ? 'vertical' : 'horizontal';
+			$stacked     = ( isset( $stacked ) && in_array( strtolower( $stacked ), array( 'yes', 'true', '1' ), true ) ) ? 'true' : 'false';
+			$bar_width   = ! empty( $bar_width )  ? (int) $bar_width  : 600;
+			$bar_height  = ! empty( $bar_height ) ? (int) $bar_height : 400;
+			$chart_area  = ! empty( $chart_area ) ? (int) $chart_area : 50;
+			$category    = ! empty( $category )   ? sanitize_text_field( $category ) : 'Label';
+			$haxis_title = isset( $haxis_title ) ? sanitize_text_field( $haxis_title ) : '';
+			$vaxis_title = isset( $vaxis_title ) ? sanitize_text_field( $vaxis_title ) : '';
+			$legend      = ! empty( $legend ) ? sanitize_text_field( $legend ) : 'right';
+			$colors      = ! empty( $colors ) ? array_map( 'trim', explode( ',', $colors ) ) : array();
+
+			$series = ! empty( $series )
+			        ? array_map( 'sanitize_text_field', array_map( 'trim', explode( ',', $series ) ) )
+			        : array();
+
+			preg_match_all( '/\[skill\s+([^\]]+)\]/', $content, $skill_matches, PREG_SET_ORDER );
+
+			$rows = array();
+			$max_values = 0;
+
+			foreach ( $skill_matches as $sk ) {
+			    preg_match_all( '/(\w+)="([^"]*)"/', $sk[1], $attrs, PREG_SET_ORDER );
+			    $pairs = array();
+			    foreach ( $attrs as $a ) { $pairs[ $a[1] ] = $a[2]; }
+
+			    $label = isset( $pairs['label'] ) ? sanitize_text_field( $pairs['label'] )
+			           : ( isset( $pairs['title'] ) ? sanitize_text_field( $pairs['title'] ) : '' );
+
+			    $values = array();
+			    if ( isset( $pairs['values'] ) && $pairs['values'] !== '' ) {
+			        foreach ( explode( ',', $pairs['values'] ) as $v ) { $values[] = (float) trim( $v ); }
+			    } else {
+			        if ( isset( $pairs['value'] ) ) { $values[] = (float) $pairs['value']; }
+			        for ( $i = 2; $i <= 10; $i++ ) {
+			            if ( isset( $pairs[ 'value' . $i ] ) && $pairs[ 'value' . $i ] !== '' ) {
+			                $values[] = (float) $pairs[ 'value' . $i ];
+			            }
+			        }
+			    }
+
+			    if ( count( $values ) > $max_values ) { $max_values = count( $values ); }
+			    $rows[] = array( 'label' => $label, 'values' => $values );
+			}
+
+			if ( empty( $rows ) || $max_values < 1 ) { return ''; }
+
+			$header = array( $category );
+			for ( $i = 0; $i < $max_values; $i++ ) {
+			    $header[] = isset( $series[ $i ] ) ? $series[ $i ] : ( 'Series ' . ( $i + 1 ) );
+			}
+
+			$chartData = array( $header );
+			foreach ( $rows as $r ) {
+			    $vals = $r['values'];
+			    while ( count( $vals ) < $max_values ) { $vals[] = 0; }
+			    $chartData[] = array_merge( array( $r['label'] ), $vals );
+			}
+
+			$viz       = ( $direction === 'vertical' ) ? 'ColumnChart' : 'BarChart';
+			$colors_js = ! empty( $colors ) ? 'options.colors = ' . wp_json_encode( array_values( $colors ) ) . ';' : '';
+
+			$wrapCode .= '
+			<div class="skt-bar-wrap">
+			    <div id="' . esc_attr( $chart_id ) . '" style="width:' . (int) $bar_width . 'px;height:' . (int) $bar_height . 'px;margin:0 auto;max-width:100%;"></div>
+			</div>
+			<script>
+			(function(){
+			    google.charts.load("current", {packages:["corechart"]});
+			    google.charts.setOnLoadCallback(function(){
+
+			        var el = document.getElementById("' . esc_js( $chart_id ) . '");
+			        if(!el){ return; }
+
+			        var data = google.visualization.arrayToDataTable(' . wp_json_encode( $chartData ) . ');
+
+			        var options = {
+			            title: "' . esc_js( $bar_title ) . '",
+			            width: ' . (int) $bar_width . ',
+			            height: ' . (int) $bar_height . ',
+			            isStacked: ' . $stacked . ',
+			            legend: { position: "' . esc_js( $legend ) . '" },
+			            chartArea: { width: "' . (int) $chart_area . '%" },
+			            hAxis: { title: "' . esc_js( $haxis_title ) . '", minValue: 0 },
+			            vAxis: { title: "' . esc_js( $vaxis_title ) . '" }
+			        };
+			        ' . $colors_js . '
+
+			        var chart = new google.visualization.' . $viz . '(el);
+			        chart.draw(data, options);
+			    });
+			})();
+			</script>';
+		break;
+
+		case 'skt_pictorialbar':
+			static $pbar_counter = 0;
+			$pbar_counter++;
+			$wrapCode = '';
+			$chart_id = 'pbar_' . $pbar_counter;
+
+			$raw        = ( isset( $atts ) && is_array( $atts ) ) ? $atts : array();
+			$pbar_title = ! empty( $raw['chart_title'] ) ? sanitize_text_field( $raw['chart_title'] ) : '';
+			$icon_shape = ! empty( $raw['icon'] ) ? strtolower( sanitize_text_field( $raw['icon'] ) ) : 'person';
+			$icon_color = ! empty( $raw['icon_color'] ) ? sanitize_text_field( $raw['icon_color'] ) : '#3b82f6';
+			$bar_h      = ! empty( $raw['bar_height'] ) ? (int) $raw['bar_height'] : 34;
+			$max_val    = ( isset( $raw['max'] ) && $raw['max'] !== '' ) ? (float) $raw['max'] : 0;
+			$show_value = ! ( isset( $raw['show_value'] ) && in_array( strtolower( $raw['show_value'] ), array( 'no', 'false', '0' ), true ) );
+
+			preg_match_all( '/\[skill\s+([^\]]+)\]/', $content, $skill_matches, PREG_SET_ORDER );
+			$rows = array();
+			foreach ( $skill_matches as $sk ) {
+			    preg_match_all( '/(\w+)="([^"]*)"/', $sk[1], $attrs, PREG_SET_ORDER );
+			    $pairs = array();
+			    foreach ( $attrs as $a ) { $pairs[ $a[1] ] = $a[2]; }
+			    $label = isset( $pairs['label'] ) ? sanitize_text_field( $pairs['label'] )
+			           : ( isset( $pairs['title'] ) ? sanitize_text_field( $pairs['title'] ) : '' );
+			    $rows[] = array( 'label' => $label, 'value' => isset( $pairs['value'] ) ? (float) $pairs['value'] : 0 );
+			}
+			if ( empty( $rows ) ) { return ''; }
+
+			// auto-max
+			if ( $max_val <= 0 ) { foreach ( $rows as $r ) { if ( $r['value'] > $max_val ) { $max_val = $r['value']; } } }
+			if ( $max_val <= 0 ) { $max_val = 1; }
+
+			// --- shape markup (%C% color, %O% opacity) + tile width ---
+			$c = max( 6, (int) round( $bar_h / 2 ) );
+			switch ( $icon_shape ) {
+			    case 'square':
+			        $cw = 24;
+			        $shape = '<rect x="4" y="' . ( $c - 9 ) . '" width="16" height="18" rx="3" fill="%C%" fill-opacity="%O%"/>';
+			        break;
+			    case 'star':
+			        $cw = 26;
+			        $shape = '<g transform="translate(0,' . ( $c - 15 ) . ')"><path d="M13 3l2.9 6 6.6.9-4.8 4.6 1.2 6.5L13 24.8 7.1 27.9l1.2-6.5L3.5 16.8l6.6-.9z" fill="%C%" fill-opacity="%O%"/></g>';
+			        break;
+			    case 'person':
+			        $cw = 22;
+			        $shape = '<g transform="translate(1,' . ( $c - 15 ) . ')"><circle cx="10" cy="7" r="5" fill="%C%" fill-opacity="%O%"/><path d="M2 28c0-5 3.6-9 8-9s8 4 8 9z" fill="%C%" fill-opacity="%O%"/></g>';
+			        break;
+			    case 'bar':
+			        $cw = 22;
+			        $shape = '<rect x="0" y="2" width="14" height="' . max( 1, $bar_h - 4 ) . '" rx="2" fill="%C%" fill-opacity="%O%"/>';
+			        break;
+			    case 'circle':
+			    case 'dot':
+			    
+			    default:
+			        $cw = 24;
+			        $shape = '<circle cx="12" cy="' . $c . '" r="8" fill="%C%" fill-opacity="%O%"/>';
+			        break;
+			}
+			$shape_fill  = str_replace( array( '%C%', '%O%' ), array( $icon_color, '1' ),    $shape );
+			$shape_ghost = str_replace( array( '%C%', '%O%' ), array( $icon_color, '0.18' ), $shape );
+
+			$person = $max_val / 25;
+
+			$wrapCode .= '<div class="skt-pbar-wrap ' . esc_attr( $chart_id ) . '" style="width:100%;max-width:760px;margin:0 auto;font-family:inherit;">';
+			if ( $pbar_title !== '' ) {
+			    $wrapCode .= '<div style="font-weight:600;margin:0 0 12px;font-size:16px;">' . esc_html( $pbar_title ) . '</div>';
+			}
+			foreach ( $rows as $i => $r ) {
+			    $pct     = max( 0, min( 100, ( $r['value'] / $max_val ) * 100 ) );
+			    $val_txt = rtrim( rtrim( number_format( $r['value'], 2, '.', ',' ), '0' ), '.' );
+			    $pf      = $chart_id . '_f' . $i;
+			    $pg      = $chart_id . '_g' . $i;
+
+			    $svg_bar = '<svg width="100%" height="' . (int) $bar_h . '" style="display:block;overflow:hidden;border-radius:4px;">'
+			             . '<defs>'
+			             . '<pattern id="' . esc_attr( $pg ) . '" width="' . (int) $cw . '" height="' . (int) $bar_h . '" patternUnits="userSpaceOnUse">' . $shape_ghost . '</pattern>'
+			             . '<pattern id="' . esc_attr( $pf ) . '" width="' . (int) $cw . '" height="' . (int) $bar_h . '" patternUnits="userSpaceOnUse">' . $shape_fill . '</pattern>'
+			             . '</defs>'
+			             . '<rect x="0" y="0" width="100%" height="' . (int) $bar_h . '" fill="url(#' . esc_attr( $pg ) . ')"/>'
+			             . '<rect x="0" y="0" width="' . $pct . '%" height="' . (int) $bar_h . '" fill="url(#' . esc_attr( $pf ) . ')"/>'
+			             . '</svg>';
+
+			    $wrapCode .= '
+			    <div style="display:flex;align-items:center;gap:10px;margin:6px 0;">
+			        <span style="flex:0 0 130px;text-align:right;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' . esc_html( $r['label'] ) . '</span>
+			        <div style="flex:1;">' . $svg_bar . '</div>';
+			    if ( $show_value ) {
+			        $wrapCode .= '<span style="flex:0 0 56px;font-size:13px;color:#444;">' . esc_html( $val_txt ) . '</span>';
+			    }
+
+
+
+			    $wrapCode .= '</div>';
+			}
+			$svg_bar = '<svg width="100%" height="' . (int) $bar_h . '" style="display:block;overflow:hidden;border-radius:4px;">'
+			             . '<rect x="0" y="0" width="8%" height="' . (int) $bar_h . '" fill="url(#' . esc_attr( $pg ) . ')"/>'
+			             . '<rect x="0" y="0" width="8%" height="' . (int) $bar_h . '" fill="url(#' . esc_attr( $pf ) . ')"/>'
+			             . '</svg>';
+
+			$wrapCode .= '
+				<div style="font-weight:600;margin:40px 0 12px;font-size:16px;display:flex;align-items:center;gap:6px;text-align:center; justify-content: flex-end;">
+				    <span>' . esc_html( $person ) . ' =</span><span>'.$svg_bar.'</span>
+			</div>';
+
+			$wrapCode .= '</div>';
+		break;
+
+		case 'skt_watercontent':
+			static $wc_counter = 0;
+			$wc_counter++;
+			$wrapCode = '';
+			$chart_id = 'wc_' . $wc_counter;
+
+			// --- attributes (raw $atts ) ---
+			$raw         = ( isset( $atts ) && is_array( $atts ) ) ? $atts : array();
+			$wc_title    = ! empty( $raw['chart_title'] ) ? sanitize_text_field( $raw['chart_title'] ) : '';
+			$water_color = ! empty( $raw['water_color'] ) ? sanitize_text_field( $raw['water_color'] ) : '#3aa0e0';
+			$size        = ! empty( $raw['size'] )  ? (int) $raw['size']  : 130;
+			$max_val     = ( isset( $raw['max'] ) && $raw['max'] !== '' ) ? (float) $raw['max'] : 100;
+			$speed       = ! empty( $raw['speed'] ) ? (float) $raw['speed'] : 2.5;
+			if ( $max_val <= 0 ) { $max_val = 100; }
+			if ( $size < 60 ) { $size = 60; }
+
+			// --- [skill label="" value=""] rows ---
+			preg_match_all( '/\[skill\s+([^\]]+)\]/', $content, $skill_matches, PREG_SET_ORDER );
+			$rows = array();
+			foreach ( $skill_matches as $sk ) {
+			    preg_match_all( '/(\w+)="([^"]*)"/', $sk[1], $attrs, PREG_SET_ORDER );
+			    $pairs = array();
+			    foreach ( $attrs as $a ) { $pairs[ $a[1] ] = $a[2]; }
+			    $label = isset( $pairs['label'] ) ? sanitize_text_field( $pairs['label'] )
+			           : ( isset( $pairs['title'] ) ? sanitize_text_field( $pairs['title'] ) : '' );
+			    $rows[] = array( 'label' => $label, 'value' => isset( $pairs['value'] ) ? (float) $pairs['value'] : 0 );
+			}
+			if ( empty( $rows ) ) { return ''; }
+
+			$kf      = $chart_id . '-move';
+			$txt_sz  = max( 14, (int) round( $size / 6 ) );
+
+			// --- scoped CSS ---
+			$wrapCode .= '<style>
+			.' . $chart_id . '{--s:' . (int) $size . 'px;--wc:' . esc_html( $water_color ) . ';display:flex;flex-wrap:wrap;gap:26px;justify-content:center;align-items:flex-start;font-family:inherit;}
+			.' . $chart_id . ' .wc-title{flex:0 0 100%;text-align:center;font-weight:600;font-size:16px;margin-bottom:4px;color:' . esc_html( $text_color ) . ';}
+			.' . $chart_id . ' .wc-item{display:flex;flex-direction:column;align-items:center;gap:10px;width:var(--s);}
+			.' . $chart_id . ' .wc-ball{position:relative;width:var(--s);height:var(--s);border-radius:50%;overflow:hidden;box-sizing:border-box;background:#eaf3fb;border:5px solid var(--wc);}
+			.' . $chart_id . ' .wc-fill{position:absolute;left:0;right:0;bottom:0;height:var(--p);background:var(--wc);transition:height 1.1s ease;}
+			.' . $chart_id . ' .wc-wave{position:absolute;left:0;bottom:100%;width:200%;height:16px;animation:' . $kf . ' ' . $speed . 's linear infinite;}
+			.' . $chart_id . ' .wc-wave svg{display:block;width:100%;height:100%;}
+			.' . $chart_id . ' .wc-txt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:' . $txt_sz . 'px;color:' . esc_html( $bar_percentcolor ) . ';text-shadow:0 1px 2px rgba(255,255,255,.55);}
+			.' . $chart_id . ' .wc-label{font-size:13px;color:' . esc_html( $text_color ) . ';text-align:center;line-height:1.2;}
+			@keyframes ' . $kf . '{to{transform:translateX(-50%);}}
+			</style>';
+
+			// --- HTML build ---
+			$wave_svg = '<svg viewBox="0 0 240 16" preserveAspectRatio="none"><path d="M0 8 Q30 2 60 8 T120 8 T180 8 T240 8 V16 H0 Z" fill="' . esc_html( $water_color ) . '"/></svg>';
+
+			$wrapCode .= '<div class="' . esc_attr( $chart_id ) . '">';
+			if ( $wc_title !== '' ) {
+			    $wrapCode .= '<div class="wc-title">' . esc_html( $wc_title ) . '</div>';
+			}
+			foreach ( $rows as $r ) {
+			    $pct      = max( 0, min( 100, ( $r['value'] / $max_val ) * 100 ) );
+			    $pct_disp = round( $pct );
+			    $wrapCode .= '<div class="wc-item">'
+			           . '<div class="wc-ball">'
+			           . '<div class="wc-fill" style="--p:' . $pct . '%;"><div class="wc-wave">' . $wave_svg . '</div></div>'
+			           . '<div class="wc-txt">' . $pct_disp . '%</div>'
+			           . '</div>'
+			           . '<div class="wc-label">' . esc_html( $r['label'] ) . '</div>'
+			           . '</div>';
+			}
+			$wrapCode .= '</div>';
+		break;
 	}
 	return $wrapCode;
 }
 add_shortcode( 'skillwrapper', 'sktskillbar_skillwrapper_func' );
-
 
 //[skill title_background="#f7a53b" bar_foreground="#f7a53b" bar_background="#eeeeee" percent="90" title="CSS3"]
 function sktskillbar_skilldata_func( $atts ) {

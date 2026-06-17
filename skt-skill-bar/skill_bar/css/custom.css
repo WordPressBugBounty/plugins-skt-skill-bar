@@ -160,7 +160,8 @@
 
 .skt-treemap-wrapper{ width:100%; max-width:100%; overflow:hidden; }
 .skt-treemap-chart{ width:100%; min-height:350px; }
-
+.google-visualization-table-td.google-visualization-table-type-number, .google-visualization-table-th{text-align: left !important;}
+.skt-timeline-heading{padding:0 0 10px 0;}
 
 @media screen and (max-width: 29.938em) {
 #skt_skills_polychart, .linegraphskill{ width:100% !important; height:auto !important;}	

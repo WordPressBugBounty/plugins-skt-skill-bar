@@ -18,7 +18,7 @@ code{ font-family:"Courier New", Courier, monospace; background:none; }
     <div class="sktimagetop_admin_image">
         <a href="<?php echo esc_url('https://www.sktthemes.org/themes/'); ?>" title="<?php esc_html( 'SKT Wordpress Themes' );?>" target="_blank"><img src="<?php echo esc_url(plugins_url( $sktskillbar_dirPath.'/images/browse-themes.png' )); ?>" alt="<?php esc_html('SKT Wordpress Themes', 'skt-skill-bar' );?>" /></a>
     </div>
-    <?php echo "<h2>" . esc_html( 'SKT Skill Bar Options', 'skt-skill-bar' ) . "</h2>"; ?>
+    <?php echo "<h2>" . esc_html( 'SKT Skill Bar Shortcodes', 'skt-skill-bar' ) . "</h2>"; ?>
     <table width="100%" class="fixed">
         <tr>
             <td width="75%">
@@ -40,7 +40,7 @@ code{ font-family:"Courier New", Courier, monospace; background:none; }
         <tr>
             <td>
                 <?php echo "<h3>" . esc_html( 'Skill Gage', 'skt-skill-bar' ) . "</h3>"; ?>
-	            <img width="540" src="<?php echo esc_url(plugins_url( $sktskillbar_dirPath.'/images/sample_gage.jpg' )); ?>" alt="<?php echo esc_html('Skill Gage', 'skt-skill-bar' );?>" /><br />
+	            <img width="540" src="<?php echo esc_url(plugins_url( $sktskillbar_dirPath.'/images/sample_gage.jpg' )); ?>" alt="<?php echo esc_html( 'Skill Gage', 'skt-skill-bar' );?>" /><br />
                 <code>
                     [skillwrapper type="gage" align="left"]<br />
                         &nbsp;&nbsp;&nbsp;&nbsp;[skill percent="75" title="WordPress" bar_foreground="#f00" bar_background="#eee"]<br />
@@ -56,7 +56,7 @@ code{ font-family:"Courier New", Courier, monospace; background:none; }
         <tr>
             <td>
                 <?php echo "<h3>" . esc_html( 'Skill Circle', 'skt-skill-bar' ) . "</h3>"; ?>
-            	<img width="540" src="<?php echo esc_url(plugins_url( $sktskillbar_dirPath.'/images/sample_circle.jpg' )); ?>" alt="<?php echo esc_html('Skill Circle', 'skt-skill-bar' );?>" /><br />
+            	<img width="540" src="<?php echo esc_url(plugins_url( $sktskillbar_dirPath.'/images/sample_circle.jpg' )); ?>" alt="<?php echo esc_html( 'Skill Circle', 'skt-skill-bar' );?>" /><br />
                 <code>
                     [skillwrapper type="circle" track_color="#333333" chart_color="#dddddd" chart_size="200" chart_fontsize="13" chart_headingfontsize="16" align="left"]<br />
                         &nbsp;&nbsp;&nbsp;&nbsp;[skill percent="88" title="Web Research"]<br />
@@ -75,7 +75,7 @@ code{ font-family:"Courier New", Courier, monospace; background:none; }
         <tr>
             <td>
                 <?php echo "<h3>" . esc_html( 'Skill Vertical Graph', 'skt-skill-bar' ) . "</h3>"; ?>
-                <img width="540" src="<?php echo esc_url(plugins_url( $sktskillbar_dirPath.'/images/ver-graph.jpg' )); ?>" alt="<?php echo esc_html('Skill Vertical Graph', 'skt-skill-bar' );?>" /><br />
+                <img width="540" src="<?php echo esc_url(plugins_url( $sktskillbar_dirPath.'/images/ver-graph.jpg' )); ?>" alt="<?php echo esc_html( 'Skill Vertical Graph', 'skt-skill-bar' );?>" /><br />
                 
                 <code>
                     [skillwrapper type="skt_verticalgraph"]<br />
@@ -93,7 +93,7 @@ code{ font-family:"Courier New", Courier, monospace; background:none; }
         <tr>
             <td>
                 <?php echo "<h3>" . esc_html( 'Skill Pie Graph', 'skt-skill-bar' ) . "</h3>"; ?>
-                <img width="540" src="<?php echo esc_url(plugins_url( $sktskillbar_dirPath.'/images/pie-graph.jpg' )); ?>" alt="<?php echo esc_html('Skill Pie Graph', 'skt-skill-bar' );?>" /><br />
+                <img width="540" src="<?php echo esc_url(plugins_url( $sktskillbar_dirPath.'/images/pie-graph.jpg' )); ?>" alt="<?php echo esc_html( 'Skill Pie Graph', 'skt-skill-bar' );?>" /><br />
                 <code>
                     [skillwrapper type="skt_piegraph"]<br />
                         &nbsp;&nbsp;&nbsp;&nbsp;[skill percent="51" title="WordPress" piegraph_background="#6adcfa"]<br />
@@ -110,7 +110,7 @@ code{ font-family:"Courier New", Courier, monospace; background:none; }
         <tr>
             <td>
                 <?php echo "<h3>" . esc_html( 'Skill Polar Graph', 'skt-skill-bar' ) . "</h3>"; ?>
-                <img width="540" src="<?php echo esc_url(plugins_url( $sktskillbar_dirPath.'/images/polar-graph.jpg' )); ?>" alt="<?php echo esc_html('Skill Polar Graph', 'skt-skill-bar' );?>" /><br />
+                <img width="540" src="<?php echo esc_url(plugins_url( $sktskillbar_dirPath.'/images/polar-graph.jpg' )); ?>" alt="<?php echo esc_html( 'Skill Polar Graph', 'skt-skill-bar' );?>" /><br />
                 <code>
                     [skillwrapper type="skt_polygraph"]<br />
                         &nbsp;&nbsp;&nbsp;&nbsp;[skill percent="51" title="WordPress" polygraph_background="#6adcfa"]<br />
@@ -127,7 +127,7 @@ code{ font-family:"Courier New", Courier, monospace; background:none; }
         <tr>
             <td>
                 <?php echo "<h3>" . esc_html( 'Skill Line Graph', 'skt-skill-bar' ) . "</h3>"; ?>
-                <img width="540" src="<?php echo esc_url(plugins_url( $sktskillbar_dirPath.'/images/line-graph.jpg' )); ?>" alt="<?php echo esc_html('Skill Line Graph', 'skt-skill-bar' );?>" /><br />
+                <img width="540" src="<?php echo esc_url(plugins_url( $sktskillbar_dirPath.'/images/line-graph.jpg' )); ?>" alt="<?php echo esc_html( 'Skill Line Graph', 'skt-skill-bar' );?>" /><br />
                 <code>
                     [skillwrapper type="skt_linegraph"]<br />
                         &nbsp;&nbsp;&nbsp;&nbsp;[skill percent="51" title="WordPress" linegraph_background="#6adcfa"]<br />
@@ -144,7 +144,7 @@ code{ font-family:"Courier New", Courier, monospace; background:none; }
         <tr>
             <td>
                 <?php echo "<h3>" . esc_html( 'Scatter Graph', 'skt-skill-bar' ) . "</h3>"; ?>
-                <img width="540" src="<?php echo esc_url(plugins_url( $sktskillbar_dirPath.'/images/scatter.jpg' )); ?>" alt="<?php echo esc_html('Scatter Graph', 'skt-skill-bar' );?>" /><br />
+                <img width="540" src="<?php echo esc_url(plugins_url( $sktskillbar_dirPath.'/images/scatter.jpg' )); ?>" alt="<?php echo esc_html( 'Scatter Graph', 'skt-skill-bar' );?>" /><br />
                 <code>
                     [skillwrapper type="skt_scattergraph" chart_label="Sales Report" chart_color="#c11616"]<br />
                         &nbsp;&nbsp;&nbsp;&nbsp;[skill x="10" y="20"]<br />
@@ -161,7 +161,7 @@ code{ font-family:"Courier New", Courier, monospace; background:none; }
         <tr>
             <td>
                 <?php echo "<h3>" . esc_html( 'Bubble Graph', 'skt-skill-bar' ) . "</h3>"; ?>
-                <img width="540" src="<?php echo esc_url(plugins_url( $sktskillbar_dirPath.'/images/bubble-graph.jpg' )); ?>" alt="<?php echo esc_html('Bubble Graph', 'skt-skill-bar' );?>" /><br />
+                <img width="540" src="<?php echo esc_url(plugins_url( $sktskillbar_dirPath.'/images/bubble-graph.jpg' )); ?>" alt="<?php echo esc_html( 'Bubble Graph', 'skt-skill-bar' );?>" /><br />
                 <code>
                     [skillwrapper type="skt_bubblegraph" chart_color="#fa6e6e" label="Sales Report" max_radius="45" x_label="X axis" y_label="Y axis"]<br />
                         &nbsp;&nbsp;&nbsp;&nbsp;[skill x="20" y="30" r="15"]<br />
@@ -178,7 +178,7 @@ code{ font-family:"Courier New", Courier, monospace; background:none; }
         <tr>
             <td>
                 <?php echo "<h3>" . esc_html( 'Mix Graph', 'skt-skill-bar' ) . "</h3>"; ?>
-                <img width="540" src="<?php echo esc_url(plugins_url( $sktskillbar_dirPath.'/images/mix-graph.jpg' )); ?>" alt="<?php echo esc_html('Mix Graph', 'skt-skill-bar' );?>" /><br />
+                <img width="540" src="<?php echo esc_url(plugins_url( $sktskillbar_dirPath.'/images/mix-graph.jpg' )); ?>" alt="<?php echo esc_html( 'Mix Graph', 'skt-skill-bar' );?>" /><br />
                 <code>
                     [skillwrapper type="skt_mixchart" heading_one="Sales" heading_two="Target" backgroundcolor_bar="#3f6bc2dd" bordercolor_bar="#FF6384" bordercolor_line="#36A2EB"]<br />
                     &nbsp;&nbsp;&nbsp;&nbsp;[skill title="January" value1="10" value2="50"]<br />
@@ -195,7 +195,7 @@ code{ font-family:"Courier New", Courier, monospace; background:none; }
         <tr>
             <td>
                 <?php echo "<h3>" . esc_html( 'Radar Graph', 'skt-skill-bar' ) . "</h3>"; ?>
-                <img width="540" src="<?php echo esc_url(plugins_url( $sktskillbar_dirPath.'/images/radar-graph.jpg' )); ?>" alt="<?php echo esc_html('Radar Graph', 'skt-skill-bar' );?>" /><br />
+                <img width="540" src="<?php echo esc_url(plugins_url( $sktskillbar_dirPath.'/images/radar-graph.jpg' )); ?>" alt="<?php echo esc_html( 'Radar Graph', 'skt-skill-bar' );?>" /><br />
                 <code>
                     [skillwrapper type="skt_radargraph" heading_one="Olympics 2024" heading_two="Olympics 2026" backgroundcolor_one="#ff7e00" bordercolor_one="#ff7e00" point_one_backgroundcolor="#ff7e00" backgroundcolor_two="#00ff00" bordercolor_two="#00ff00" point_two_backgroundcolor="#00ff00"]<br />
                     &nbsp;&nbsp;&nbsp;&nbsp;[skill title="Eating" value1="65" value2="28"]<br />
@@ -215,7 +215,7 @@ code{ font-family:"Courier New", Courier, monospace; background:none; }
         <tr>
             <td>
                 <?php echo "<h3>" . esc_html( 'Waterfall Graph', 'skt-skill-bar' ) . "</h3>"; ?>
-                <img width="540" src="<?php echo esc_url(plugins_url( $sktskillbar_dirPath.'/images/waterfall-graph.jpg' )); ?>" alt="<?php echo esc_html('Waterfall Graph', 'skt-skill-bar' );?>" /><br />
+                <img width="540" src="<?php echo esc_url(plugins_url( $sktskillbar_dirPath.'/images/waterfall-graph.jpg' )); ?>" alt="<?php echo esc_html( 'Waterfall Graph', 'skt-skill-bar' );?>" /><br />
                 <code>
                     [skillwrapper type="skt_waterfallchart" risingcolor="#00ff00" fallingcolor="#ff0000" text_color="#00000"]<br />
                     &nbsp;&nbsp;&nbsp;&nbsp;[skill title="Mon" low="28" open="28" close="38" high="38"]<br />
@@ -233,7 +233,7 @@ code{ font-family:"Courier New", Courier, monospace; background:none; }
         <tr>
             <td>
                 <?php echo "<h3>" . esc_html( 'Combo Graph', 'skt-skill-bar' ) . "</h3>"; ?>
-                <img width="540" src="<?php echo esc_url(plugins_url( $sktskillbar_dirPath.'/images/combo-graph.jpg' )); ?>" alt="<?php echo esc_html('Combo Graph', 'skt-skill-bar' );?>" /><br />
+                <img width="540" src="<?php echo esc_url(plugins_url( $sktskillbar_dirPath.'/images/combo-graph.jpg' )); ?>" alt="<?php echo esc_html( 'Combo Graph', 'skt-skill-bar' );?>" /><br />
                 <code>
                     [skillwrapper type="skt_combochart" chart_title="Monthly Coffee Production by Country" haxis_title="Month" vaxis_title="Cups" columns="Bolivia|Ecuador|Madagascar|Papua New Guinea|Rwanda|Average" text_color="#ff0040"]
                     <br />&nbsp;&nbsp;&nbsp;&nbsp;[skill title="2004/05" values="165|938|522|998|450|614.6"]
@@ -251,7 +251,7 @@ code{ font-family:"Courier New", Courier, monospace; background:none; }
         <tr>
             <td>
                 <?php echo "<h3>" . esc_html( 'PieDiff Graph', 'skt-skill-bar' ) . "</h3>"; ?>
-                <img width="540" src="<?php echo esc_url(plugins_url( $sktskillbar_dirPath.'/images/piediff-graph.jpg' )); ?>" alt="<?php echo esc_html('PieDiff Graph', 'skt-skill-bar' );?>" /><br />
+                <img width="540" src="<?php echo esc_url(plugins_url( $sktskillbar_dirPath.'/images/piediff-graph.jpg' )); ?>" alt="<?php echo esc_html( 'PieDiff Graph', 'skt-skill-bar' );?>" /><br />
                 <code>
                     [skillwrapper type="skt_piediff" title_old="Old Data" title_new="New Data" combine_title="Overview" title_color="#000000"]
                     <br />&nbsp;&nbsp;&nbsp;&nbsp;[skill title="Business" old="256070" new="358293"]
@@ -270,7 +270,7 @@ code{ font-family:"Courier New", Courier, monospace; background:none; }
         <tr>
             <td>
                 <?php echo "<h3>" . esc_html( 'CoulmnDiff Graph', 'skt-skill-bar' ) . "</h3>"; ?>
-                <img width="540" src="<?php echo esc_url(plugins_url( $sktskillbar_dirPath.'/images/columndiff-graph.jpg' )); ?>" alt="<?php echo esc_html('CoulmnDiff Graph', 'skt-skill-bar' );?>" /><br />
+                <img width="540" src="<?php echo esc_url(plugins_url( $sktskillbar_dirPath.'/images/columndiff-graph.jpg' )); ?>" alt="<?php echo esc_html( 'CoulmnDiff Graph', 'skt-skill-bar' );?>" /><br />
                 <code>
                     [skillwrapper type="skt_columndiff" column_color="#0000ff|#ff5722" value_label="Degrees" show_bar_diff="no" text_color='#000000']
                     <br />&nbsp;&nbsp;&nbsp;&nbsp;[skill title="Business" old="2560" new="3500"]
@@ -285,7 +285,7 @@ code{ font-family:"Courier New", Courier, monospace; background:none; }
         <tr>
             <td>
                 <?php echo "<h3>" . esc_html( 'Stepped Area Graph', 'skt-skill-bar' ) . "</h3>"; ?>
-                <img width="540" src="<?php echo esc_url(plugins_url( $sktskillbar_dirPath.'/images/steppedarea-graph.jpg' )); ?>" alt="<?php echo esc_html('Stepped Area Graph', 'skt-skill-bar' );?>" /><br />
+                <img width="540" src="<?php echo esc_url(plugins_url( $sktskillbar_dirPath.'/images/steppedarea-graph.jpg' )); ?>" alt="<?php echo esc_html( 'Stepped Area Graph', 'skt-skill-bar' );?>" /><br />
                 <code>
                     [skillwrapper type="skt_steppedarea" series1="Rotten Tomatoes" series2="IMDB" axis_title="Accumulated Rating" steppedchart_title="Stepped Area Chart" stepped_color="#00ff40|#8000ff" text_color="#8000ff"]
                     <br />&nbsp;&nbsp;&nbsp;&nbsp;[skill title="Alfred Hitchcock (1935)" v1="8.4" v2="7.9"]
@@ -295,6 +295,162 @@ code{ font-family:"Courier New", Courier, monospace; background:none; }
                     [/skillwrapper]
                 </code>
             </td>
-        </tr>        
+        </tr>
+        <tr>
+            <td>
+                <?php echo "<h3>" . esc_html( '3D Graph', 'skt-skill-bar' ) . "</h3>"; ?>
+                <img width="540" src="<?php echo esc_url(plugins_url( $sktskillbar_dirPath.'/images/three-d-graph.jpg' )); ?>" alt="<?php echo esc_html( '3D Graph', 'skt-skill-bar' );?>" /><br />
+                <code>
+                    [skillwrapper type="skt_pie3d" chart_title="My Daily Activities" text_color="#333333"]
+                    <br />&nbsp;&nbsp;&nbsp;&nbsp;[skill title="Work"     value="8" backgroundcolr="#FF6D01"]
+                    <br />&nbsp;&nbsp;&nbsp;&nbsp;[skill title="Eat"      value="2"  backgroundcolr="#EA4335"]
+                    <br />&nbsp;&nbsp;&nbsp;&nbsp;[skill title="Commute"  value="4"  backgroundcolr="#FBBC05"]
+                    <br />&nbsp;&nbsp;&nbsp;&nbsp;[skill title="Watch TV" value="2"  backgroundcolr="#4285F4"]
+                    <br />&nbsp;&nbsp;&nbsp;&nbsp;[skill title="Sleep"    value="8"  backgroundcolr="#34A853"]<br />
+                    [/skillwrapper]
+                </code>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <?php echo "<h3>" . esc_html( 'Timeline Graph', 'skt-skill-bar' ) . "</h3>"; ?>
+                <img width="540" src="<?php echo esc_url(plugins_url( $sktskillbar_dirPath.'/images/timeline.jpg' )); ?>" alt="<?php echo esc_html( 'Timeline Graph', 'skt-skill-bar' );?>" /><br />
+                <code>
+                    [skillwrapper type="skt_timeline" chart_title="Project Timeline" chart_title_color="#333333"]
+                    <br />&nbsp;&nbsp;&nbsp;&nbsp;[skill title="Planning" start="2026-01-01" end="2026-01-15"]
+                    <br />&nbsp;&nbsp;&nbsp;&nbsp;[skill title="Design" start="2026-01-16" end="2026-02-15"]
+                    <br />&nbsp;&nbsp;&nbsp;&nbsp;[skill title="Development" start="2026-02-16" end="2026-04-30"]
+                    <br />&nbsp;&nbsp;&nbsp;&nbsp;[skill title="Testing" start="2026-05-01" end="2026-05-31"]<br />
+                    [/skillwrapper]
+                </code><br/><br/>
+                <span><strong>Note: Use the date format YY-MM-DD, where YY = Year, MM = Month, and DD = Day.</strong>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <?php echo "<h3>" . esc_html( 'Geo Graph', 'skt-skill-bar' ) . "</h3>"; ?>
+                <img width="540" src="<?php echo esc_url(plugins_url( $sktskillbar_dirPath.'/images/geograph.jpg' )); ?>" alt="<?php echo esc_html( 'Geo Graph', 'skt-skill-bar' );?>" /><br />
+                <code>
+                    [skillwrapper type="skt_geochart" chart_title="Country Popularity" text_color="#333333" start_range_color="#e7711c" end_range_color="#4374e0"]
+                    <br />&nbsp;&nbsp;&nbsp;&nbsp;[skill country="Germany" value="200"]
+                    <br />&nbsp;&nbsp;&nbsp;&nbsp;[skill country="United States" value="300"]
+                    <br />&nbsp;&nbsp;&nbsp;&nbsp;[skill country="Brazil" value="400"]
+                    <br />&nbsp;&nbsp;&nbsp;&nbsp;[skill country="Canada" value="500"]
+                    <br />&nbsp;&nbsp;&nbsp;&nbsp;[skill country="France" value="600"]
+                    <br />&nbsp;&nbsp;&nbsp;&nbsp;[skill country="Russia" value="700"]
+                    <br />&nbsp;&nbsp;&nbsp;&nbsp;[skill country="India" value="400"]<br />
+                    [/skillwrapper]
+                </code><br/><br/>
+                <span><strong>Note: Please use the full country name in the shortcode parameters. For example, use "India" instead of "IN", "United States" instead of "US", and "United Kingdom" instead of "UK".</strong>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <?php echo "<h3>" . esc_html( 'Datatable', 'skt-skill-bar' ) . "</h3>"; ?>
+                <img width="540" src="<?php echo esc_url(plugins_url( $sktskillbar_dirPath.'/images/datatable.jpg' )); ?>" alt="<?php echo esc_html( 'Datatable', 'skt-skill-bar' );?>" /><br />
+                <code>
+                    [skillwrapper type="skt_datatable" columns="Name|Age|Date of Birth|Mobile Number"]
+                    <br />&nbsp;&nbsp;&nbsp;&nbsp;[skill values="Rahul|28|12-05-1997|9876543210"]
+                    <br />&nbsp;&nbsp;&nbsp;&nbsp;[skill values="Priya|24|03-11-2001|9123456789"]
+                    <br />&nbsp;&nbsp;&nbsp;&nbsp;[skill values="Aman|31|22-08-1994|9001234567"]<br />
+                    [/skillwrapper]
+                </code><br/><br/>
+                <span><strong>Note: Ensure the number of values matches the number of columns in the same order otherwise, data may render incorrectly, and by default all columns are left-aligned.</strong>
+            </td>
+        </tr>
+
+        <tr>
+            <td>
+                <?php echo "<h3>" . esc_html( 'Line Interval Graph', 'skt-skill-bar' ) . "</h3>"; ?>
+                <img width="540" src="<?php echo esc_url(plugins_url( $sktskillbar_dirPath.'/images/lineinterval.jpg' )); ?>" alt="<?php echo esc_html( 'Line Interval Graph', 'skt-skill-bar' );?>" /><br />
+                <code>
+                    [skillwrapper type="skt_lineinterval" chart_title="Line Intervals"]
+                    <br />&nbsp;&nbsp;&nbsp;&nbsp;[skill x="1" value="100" interval1="90" interval2="110" interval3="85" interval4="96" interval5="104" interval6="120"]
+                    <br />&nbsp;&nbsp;&nbsp;&nbsp;[skill x="2" value="120" interval1="95" interval2="130" interval3="90" interval4="113" interval5="124" interval6="140"]
+                    <br />&nbsp;&nbsp;&nbsp;&nbsp;[skill x="3" value="130" interval1="105" interval2="140" interval3="100" interval4="117" interval5="133" interval6="139"]
+                    <br />&nbsp;&nbsp;&nbsp;&nbsp;[skill x="4" value="90" interval1="85" interval2="95" interval3="85" interval4="88" interval5="92" interval6="95"]<br />
+                    [/skillwrapper]
+                </code>
+            </td>
+        </tr>
+
+        <tr>
+            <td>
+                <?php echo "<h3>" . esc_html( 'Area Graph', 'skt-skill-bar' ) . "</h3>"; ?>
+                <img width="540" src="<?php echo esc_url(plugins_url( $sktskillbar_dirPath.'/images/area-graph.jpg' )); ?>" alt="<?php echo esc_html( 'Area Graph', 'skt-skill-bar' );?>" /><br />
+                <code>
+                    [skillwrapper type="skt_areachart" chart_title="Company Performance" haxis_title="Year" color_label="#ffc012"]
+                    <br />&nbsp;&nbsp;&nbsp;&nbsp;[skill year="2013" sales="1000" expenses="400"]
+                    <br />&nbsp;&nbsp;&nbsp;&nbsp;[skill year="2014" sales="1170" expenses="460"]
+                    <br />&nbsp;&nbsp;&nbsp;&nbsp;[skill year="2015" sales="660" expenses="1120"]
+                    <br />&nbsp;&nbsp;&nbsp;&nbsp;[skill year="2016" sales="1030" expenses="540"]<br />
+                    [/skillwrapper]
+            </td>
+        </tr>
+
+        <tr>
+            <td>
+                <?php echo "<h3>" . esc_html( 'Trendline Graph', 'skt-skill-bar' ) . "</h3>"; ?>
+                <img width="540" src="<?php echo esc_url(plugins_url( $sktskillbar_dirPath.'/images/trendline-graph.jpg' )); ?>" alt="<?php echo esc_html( 'Trendline Graph', 'skt-skill-bar' );?>" /><br />
+                <code>
+                    [skillwrapper type="skt_trendline" chart_title="Sales Trend" x_label="Month" y_label="Revenue" text_color="#333333" point_color="#9e8b90"]
+                    <br />&nbsp;&nbsp;&nbsp;&nbsp;[skill x="1" y="120"]
+                    <br />&nbsp;&nbsp;&nbsp;&nbsp;[skill x="2" y="150"]
+                    <br />&nbsp;&nbsp;&nbsp;&nbsp;[skill x="3" y="180"]
+                    <br />&nbsp;&nbsp;&nbsp;&nbsp;[skill x="4" y="220"]
+                    <br />&nbsp;&nbsp;&nbsp;&nbsp;[skill x="5" y="260"]<br />
+                    [/skillwrapper]
+                </code>
+            </td>
+        </tr>
+
+        <tr>
+            <td>
+                <?php echo "<h3>" . esc_html( 'Bar Graph', 'skt-skill-bar' ) . "</h3>"; ?>
+                <img width="540" src="<?php echo esc_url(plugins_url( $sktskillbar_dirPath.'/images/bar-line-graph.jpg' )); ?>" alt="<?php echo esc_html( 'Bar Graph', 'skt-skill-bar' );?>" /><br />
+                <code>
+                    [skillwrapper type="skt_bar" bar_title="Population of Largest U.S. Cities" category="City" series="2010 Population,2000 Population" haxis_title="Total Population" vaxis_title="City"]
+                    <br />&nbsp;&nbsp;&nbsp;&nbsp;[skill label="New York City, NY" value="8175000" value2="8008000"]
+                    <br />&nbsp;&nbsp;&nbsp;&nbsp;[skill label="Los Angeles, CA" value="3792000" value2="3694000"]
+                    <br />&nbsp;&nbsp;&nbsp;&nbsp;[skill label="Chicago, IL" value="2695000" value2="2896000"]
+                    <br />&nbsp;&nbsp;&nbsp;&nbsp;[skill label="Houston, TX" value="2099000" value2="1953000"]
+                    <br />&nbsp;&nbsp;&nbsp;&nbsp;[skill label="Philadelphia, PA"  value="1526000" value2="1517000"]<br />
+                    [/skillwrapper]
+                </code>
+            </td>
+        </tr>
+
+        <tr>
+            <td>
+                <?php echo "<h3>" . esc_html( 'Pictorial Bar', 'skt-skill-bar' ) . "</h3>"; ?>
+                <img width="540" src="<?php echo esc_url(plugins_url( $sktskillbar_dirPath.'/images/pictorial-bar.jpg' )); ?>" alt="<?php echo esc_html( 'Pictorial Bar Graph', 'skt-skill-bar' );?>" /><br />
+                <code>
+                    [skillwrapper type="skt_pictorialbar" chart_title="Population of Largest U.S. Cities" icon_color="#fcba03" max="9000000"]
+                    <br />&nbsp;&nbsp;&nbsp;&nbsp;[skill label="New York City" value="8175000"]
+                    <br />&nbsp;&nbsp;&nbsp;&nbsp;[skill label="Los Angeles"   value="3792000"]
+                    <br />&nbsp;&nbsp;&nbsp;&nbsp;[skill label="Chicago"        value="2695000"]
+                    <br />&nbsp;&nbsp;&nbsp;&nbsp;[skill label="Houston"        value="2099000"]
+                    <br />&nbsp;&nbsp;&nbsp;&nbsp;[skill label="Philadelphia"   value="1526000"]<br />
+                    [/skillwrapper]
+                </code>
+            </td>
+        </tr>
+
+        <tr>
+            <td>
+                <?php echo "<h3>" . esc_html( 'Water Level', 'skt-skill-bar' ) . "</h3>"; ?>
+                <img width="540" src="<?php echo esc_url(plugins_url( $sktskillbar_dirPath.'/images/water-level-graph.jpg' )); ?>" alt="<?php echo esc_html( 'Water Level Graph', 'skt-skill-bar' );?>" /><br />
+                <code>
+                    [skillwrapper type="skt_watercontent" chart_title="Water Content" text_color="#333333" bar_percentcolor="#6960e0" water_color="#b4b0eb" size="200" max="100"]
+                    <br />&nbsp;&nbsp;&nbsp;&nbsp;[skill label="Cucumber" value="30"]
+                    <br />&nbsp;&nbsp;&nbsp;&nbsp;[skill label="Watermelon" value="92"]
+                    <br />&nbsp;&nbsp;&nbsp;&nbsp;[skill label="Apple" value="84"]
+                    <br />&nbsp;&nbsp;&nbsp;&nbsp;[skill label="Banana" value="74"]<br />
+                    [/skillwrapper]
+                </code><br/><br/>
+                <strong>Note: Enter value as percentages based on the maximum value (max="100"), not as actual counts.
+</strong>
+            </td>
+        </tr>
     </table>
 </div>
