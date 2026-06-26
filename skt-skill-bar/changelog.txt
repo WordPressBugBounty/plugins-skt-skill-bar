@@ -1,4 +1,17 @@
 == Changelog ==
+=3.0=
+* Added 10 new graph shortcodes:
+	Areastack
+	Mountain
+	Donutpattern
+	Isometric
+	Area Negative
+	Pyramid
+	Reversed Bar
+	Trapezoid Funnel
+	Dumbbell
+	Slope
+
 =2.8=
 * Added 10 new graph shortcodes:
 	3D Graph

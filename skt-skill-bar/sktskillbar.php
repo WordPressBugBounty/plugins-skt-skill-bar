@@ -6,7 +6,7 @@
 * Author:      SKT Themes
 * Author URI:  https://www.sktthemes.org
 * Text Domain: skt-skill-bar
-* Version:     2.8
+* Version:     3.0
 * License: 	   GPLv2 or later
 * License URI: http://www.gnu.org/licenses/gpl-2.0.html
 */
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define('SB_VER','2.8');
+define('SB_VER','3.0');
 add_action('wp_print_scripts', 'sbar_register_scripts');
 add_action('wp_print_styles', 'sbar_register_styles');
 define( 'SKT_sbar_URI', plugins_url( '', __FILE__ ) );
@@ -59,6 +59,16 @@ function sbar_register_styles() {
 	wp_register_style('skt_verticleline_css', plugins_url('skill_bar/css/custom.css', __FILE__),'',SB_VER,false);	// register
 	wp_enqueue_style('skt_verticleline_css');// enqueue
 }
+
+function sbar_admin_styles() {
+    wp_enqueue_style(
+        'admin-style',
+        plugin_dir_url(__FILE__) . 'skill_bar/css/admin_style.css',
+        array(),
+        SB_VER
+    );
+}
+add_action('admin_enqueue_scripts', 'sbar_admin_styles');
 
 //	[skillwrapper type="circle" track_color="#dddddd" chart_color="#333333" chart_size="150"][/skillwrapper]
 function sktskillbar_skillwrapper_func( $atts, $content = null ) {
@@ -161,9 +171,9 @@ function sktskillbar_skillwrapper_func( $atts, $content = null ) {
 
 
 	), $atts ) );
-
+	$wrapCode = '';
 	switch ( $type ){
-
+		
 		case 'bar':
 			$wrapCode = '<div id="skillbar_straight" style="padding:10px 0;">'.str_replace('<br />', "\n", do_shortcode($content))."\n".'<div style="clear:both;"></div>'."\n".'</div>'."\n".'<div style="clear:both; height:10px; overflow:hidden;"></div>'."\n";
 			$wrapCode .= '<style type="text/css">.skillbar-title{font-size:'.esc_attr($bar_titlefontsize).'px;color:'.esc_attr($bar_titlecolor).';}.skill-bar-percent{font-size:'.esc_attr($bar_percentfontszie).'px;color:'.esc_attr($bar_percentcolor).';}</style>';
@@ -2321,7 +2331,6 @@ function sktskillbar_skillwrapper_func( $atts, $content = null ) {
 		    </script>';
 		break;
 
-
 		case 'skt_areachart':
 
 		    static $area_counter = 0;
@@ -2805,6 +2814,1370 @@ function sktskillbar_skillwrapper_func( $atts, $content = null ) {
 			}
 			$wrapCode .= '</div>';
 		break;
+
+		case 'skt_mountain':
+			static $mtn_counter = 0;
+			$mtn_counter++;
+			$wrapCode = '';
+			$chart_id = 'mtn_' . $mtn_counter;
+
+			// --- attributes (raw $atts se) ---
+			$raw       = ( isset( $atts ) && is_array( $atts ) ) ? $atts : array();
+			$mtn_title = ! empty( $raw['chart_title'] ) ? sanitize_text_field( $raw['chart_title'] ) : '';
+			$mtn_color = ! empty( $raw['color'] )   ? sanitize_text_field( $raw['color'] )   : '#e54035';
+			$max_val   = ( isset( $raw['max'] ) && $raw['max'] !== '' ) ? (float) $raw['max'] : 0;
+			$max_h     = ! empty( $raw['height'] )  ? (int) $raw['height']  : 240;   // tallest hill px
+			$overlap   = ! empty( $raw['overlap'] ) ? (int) $raw['overlap'] : 185;   // hill width %
+
+			// --- [skill label="" value=""] rows ---
+			preg_match_all( '/\[skill\s+([^\]]+)\]/', $content, $skill_matches, PREG_SET_ORDER );
+			$rows = array();
+			foreach ( $skill_matches as $sk ) {
+			    preg_match_all( '/(\w+)="([^"]*)"/', $sk[1], $attr_m, PREG_SET_ORDER );
+			    $pairs = array();
+			    foreach ( $attr_m as $a ) { $pairs[ $a[1] ] = $a[2]; }
+			    $label = isset( $pairs['label'] ) ? sanitize_text_field( $pairs['label'] )
+			           : ( isset( $pairs['title'] ) ? sanitize_text_field( $pairs['title'] ) : '' );
+			    $rows[] = array(
+			        'label' => $label,
+			        'value' => isset( $pairs['value'] ) ? (float) $pairs['value'] : 0,
+			    );
+			}
+			if ( empty( $rows ) ) { return ''; }
+
+			if ( $max_val <= 0 ) { foreach ( $rows as $r ) { if ( $r['value'] > $max_val ) { $max_val = $r['value']; } } }
+			if ( $max_val <= 0 ) { $max_val = 1; }
+
+			// --- scoped CSS ---
+			$wrapCode .= '<style>
+			.' . $chart_id . '{--ink:' . esc_html( $mtn_color ) . ';font-family:inherit;max-width:860px;margin:0 auto;padding:24px 12px 6px;box-sizing:border-box;}
+			.' . $chart_id . ' .pm-title{text-align:center;font-size:18px;font-weight:600;color:#222;margin:0 0 20px;}
+			.' . $chart_id . ' .pm-scroll{overflow-x:auto;padding-bottom:4px;}
+			.' . $chart_id . ' .pm-range{display:flex;align-items:flex-end;justify-content:center;min-width:' . ( count( $rows ) * 66 ) . 'px;}
+			.' . $chart_id . ' .pm-col{position:relative;flex:1 1 0;display:flex;flex-direction:column;align-items:center;}
+			.' . $chart_id . ' .pm-hill{position:relative;width:' . (int) $overlap . '%;align-self:center;}
+			.' . $chart_id . ' .pm-hill svg{display:block;width:100%;height:100%;}
+			.' . $chart_id . ' .pm-hillpath{fill:var(--ink);fill-opacity:.5;transition:fill-opacity .25s ease;}
+			.' . $chart_id . ' .pm-hill:hover .pm-hillpath{fill-opacity:1;}
+			.' . $chart_id . ' .pm-label{margin-top:9px;color:var(--ink);font-size:13.5px;font-weight:600;white-space:nowrap;}
+			@media (prefers-reduced-motion:reduce){.' . $chart_id . ' .pm-hillpath{transition:none;}}
+			</style>';
+
+			// --- HTML build ---
+			$n = count( $rows );
+			$wrapCode .= '<div class="' . esc_attr( $chart_id ) . '">';
+			if ( $mtn_title !== '' ) {
+			    $wrapCode .= '<div class="pm-title">' . esc_html( $mtn_title ) . '</div>';
+			}
+			$wrapCode .= '<div class="pm-scroll"><div class="pm-range">';
+
+			foreach ( $rows as $i => $r ) {
+			    $h  = max( 6, (int) round( ( $r['value'] / $max_val ) * $max_h ) );
+			    $z  = $n - $i;
+			    $vt = rtrim( rtrim( number_format( $r['value'], 2, '.', ',' ), '0' ), '.' );
+
+			    $wrapCode .= '<div class="pm-col" style="z-index:' . (int) $z . ';">'
+			           . '<div class="pm-hill" style="height:' . (int) $h . 'px;">'
+			           . '<svg viewBox="0 0 10 10" preserveAspectRatio="none"><title>' . esc_html( $r['label'] . ': ' . $vt ) . '</title>'
+			           . '<path class="pm-hillpath" d="M0,10 L10,10 C5.5,10 5.5,5 5,0 C4.5,5 4.5,10 0,10 z"/></svg>'
+			           . '</div>'
+			           . '<div class="pm-label">' . esc_html( $r['label'] ) . '</div>'
+			           . '</div>';
+			}
+
+			$wrapCode .= '</div></div></div>';
+		break;
+
+		case 'skt_areastack':
+		static $as_counter = 0;
+		$as_counter++;
+		$wrapCode = '';
+		$chart_id = 'as_' . $as_counter;
+
+		// --- attributes ---
+		$raw      = ( isset( $atts ) && is_array( $atts ) ) ? $atts : array();
+		$as_title = ! empty( $raw['chart_title'] ) ? sanitize_text_field( $raw['chart_title'] ) : '';
+		$cats     = ! empty( $raw['categories'] ) ? array_map( 'trim', explode( ',', $raw['categories'] ) ) : array();
+		$opacity  = ( isset( $raw['opacity'] ) && $raw['opacity'] !== '' ) ? (float) $raw['opacity'] : 0.8;
+		$ch_h     = ! empty( $raw['height'] ) ? (int) $raw['height'] : 360;
+		$smoothOn = ! ( isset( $raw['smooth'] ) && in_array( strtolower( $raw['smooth'] ), array( 'no', 'false', '0' ), true ) );
+
+		$palette = array(
+		    array( 'rgb(128,255,165)', 'rgb(1,191,236)' ),
+		    array( 'rgb(0,221,255)',   'rgb(77,119,255)' ),
+		    array( 'rgb(55,162,255)',  'rgb(116,21,219)' ),
+		    array( 'rgb(255,0,135)',   'rgb(135,0,157)' ),
+		    array( 'rgb(255,191,0)',   'rgb(224,62,76)' ),
+		);
+
+		// --- [skill] series parse ---
+		preg_match_all( '/\[skill\s+([^\]]+)\]/', $content, $skill_matches, PREG_SET_ORDER );
+		$series = array();
+		$n = 0;
+		foreach ( $skill_matches as $idx => $sk ) {
+		    preg_match_all( '/(\w+)="([^"]*)"/', $sk[1], $attr_m, PREG_SET_ORDER );
+		    $pairs = array();
+		    foreach ( $attr_m as $a ) { $pairs[ $a[1] ] = $a[2]; }
+		    $label = isset( $pairs['label'] ) ? sanitize_text_field( $pairs['label'] )
+		           : ( isset( $pairs['title'] ) ? sanitize_text_field( $pairs['title'] ) : ( 'Series ' . ( $idx + 1 ) ) );
+		    $vals = array();
+		    if ( isset( $pairs['values'] ) ) {
+		        foreach ( explode( ',', $pairs['values'] ) as $v ) { $vals[] = (float) trim( $v ); }
+		    }
+		    if ( count( $vals ) > $n ) { $n = count( $vals ); }
+		    $pal = $palette[ $idx % count( $palette ) ];
+		    $series[] = array(
+		        'label' => $label,
+		        'vals'  => $vals,
+		        'c0'    => ! empty( $pairs['color'] )  ? sanitize_text_field( $pairs['color'] )  : $pal[0],
+		        'c1'    => ! empty( $pairs['color2'] ) ? sanitize_text_field( $pairs['color2'] )
+		                 : ( ! empty( $pairs['color'] ) ? sanitize_text_field( $pairs['color'] ) : $pal[1] ),
+		    );
+		}
+		if ( empty( $series ) || $n < 2 ) { return ''; }
+
+		foreach ( $series as &$s ) { while ( count( $s['vals'] ) < $n ) { $s['vals'][] = 0; } }
+		unset( $s );
+		for ( $j = count( $cats ); $j < $n; $j++ ) { $cats[] = (string) ( $j + 1 ); }
+
+		// --- stacking ---
+		$cum = array_fill( 0, $n, 0.0 );
+		foreach ( $series as &$s ) {
+		    $base = $cum;
+		    for ( $j = 0; $j < $n; $j++ ) { $cum[ $j ] += $s['vals'][ $j ]; }
+		    $s['top'] = $cum;
+		    $s['bot'] = $base;
+		}
+		unset( $s );
+		$rawMax = max( $cum ); if ( $rawMax <= 0 ) { $rawMax = 1; }
+
+		// nice y max
+		$rough = $rawMax / 5;
+		$mag   = pow( 10, floor( log10( $rough ) ) );
+		$norm  = $rough / $mag;
+		$nice  = $norm <= 1 ? 1 : ( $norm <= 2 ? 2 : ( $norm <= 5 ? 5 : 10 ) );
+		$step  = $nice * $mag;
+		$niceMax = ceil( $rawMax / $step ) * $step;
+		if ( $niceMax <= 0 ) { $niceMax = $step; }
+
+		// --- geometry ---
+		$W = 780; $H = $ch_h; $mL = 46; $mR = 16; $mT = 14; $mB = 26;
+		$pW = $W - $mL - $mR; $pH = $H - $mT - $mB;
+		$xx = function( $j ) use ( $mL, $pW, $n ) { return $mL + ( $n > 1 ? $pW * $j / ( $n - 1 ) : 0 ); };
+		$yy = function( $v ) use ( $mT, $pH, $niceMax ) { return $mT + $pH * ( 1 - $v / $niceMax ); };
+
+		// Catmull-Rom -> bezier
+		$smooth = function( $pts ) use ( $smoothOn ) {
+		    $m = count( $pts ); $d = '';
+		    if ( $m < 2 ) { return $d; }
+		    if ( ! $smoothOn ) {
+		        for ( $i = 1; $i < $m; $i++ ) { $d .= ' L' . round( $pts[$i][0], 2 ) . ',' . round( $pts[$i][1], 2 ); }
+		        return $d;
+		    }
+		    for ( $i = 0; $i < $m - 1; $i++ ) {
+		        $p0 = $pts[ $i == 0 ? 0 : $i - 1 ]; $p1 = $pts[ $i ];
+		        $p2 = $pts[ $i + 1 ]; $p3 = $pts[ ( $i + 2 < $m ) ? $i + 2 : $m - 1 ];
+		        $c1x = $p1[0] + ( $p2[0] - $p0[0] ) / 6; $c1y = $p1[1] + ( $p2[1] - $p0[1] ) / 6;
+		        $c2x = $p2[0] - ( $p3[0] - $p1[0] ) / 6; $c2y = $p2[1] - ( $p3[1] - $p1[1] ) / 6;
+		        $d .= ' C' . round($c1x,2) . ',' . round($c1y,2) . ' ' . round($c2x,2) . ',' . round($c2y,2) . ' ' . round($p2[0],2) . ',' . round($p2[1],2);
+		    }
+		    return $d;
+		};
+
+		// --- areas + gradient defs ---
+		$defs = ''; $areas = '';
+		foreach ( $series as $k => $s ) {
+		    $gid = $chart_id . '_g' . $k;
+		    $defs .= '<linearGradient id="' . esc_attr( $gid ) . '" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="' . esc_attr( $s['c0'] ) . '"/><stop offset="100%" stop-color="' . esc_attr( $s['c1'] ) . '"/></linearGradient>';
+		    $topPts = array(); $botPts = array();
+		    for ( $j = 0; $j < $n; $j++ ) {
+		        $topPts[] = array( $xx( $j ), $yy( $s['top'][$j] ) );
+		        $botPts[] = array( $xx( $j ), $yy( $s['bot'][$j] ) );
+		    }
+		    $botRev = array_reverse( $botPts );
+		    $d  = 'M' . round($topPts[0][0],2) . ',' . round($topPts[0][1],2) . $smooth( $topPts );
+		    $d .= ' L' . round($botRev[0][0],2) . ',' . round($botRev[0][1],2) . $smooth( $botRev ) . ' Z';
+		    $areas .= '<path d="' . $d . '" fill="url(#' . esc_attr( $gid ) . ')" fill-opacity="' . $opacity . '"/>';
+		}
+
+		// y grid + labels
+		$grid = ''; $ylabels = '';
+		for ( $v = 0; $v <= $niceMax + 0.001; $v += $step ) {
+		    $gy = $yy( $v );
+		    $grid    .= '<line x1="' . $mL . '" y1="' . round($gy,2) . '" x2="' . ( $W - $mR ) . '" y2="' . round($gy,2) . '" stroke="#eee"/>';
+		    $ylabels .= '<text x="' . ( $mL - 6 ) . '" y="' . round($gy + 3,2) . '" text-anchor="end" font-size="11" fill="#999">' . rtrim(rtrim(number_format($v,2,'.',''),'0'),'.') . '</text>';
+		}
+		// x labels
+		$xlabels = '';
+		for ( $j = 0; $j < $n; $j++ ) {
+		    $xlabels .= '<text x="' . round($xx($j),2) . '" y="' . ( $H - 8 ) . '" text-anchor="middle" font-size="11" fill="#999">' . esc_html( $cats[$j] ) . '</text>';
+		}
+
+		// --- hover guide + tooltip (auto width + label clip) ---
+		$hovers = ''; $slot = $pW / ( $n - 1 );
+
+		// tooltip width = sabse lambe label ke hisaab se (header bhi consider), cap 320
+		$maxlen = 3; // "May" jaisa header
+		foreach ( $series as $s ) { $len = strlen( $s['label'] ); if ( $len > $maxlen ) { $maxlen = $len; } }
+		$tw = (int) min( 320, max( 150, 24 + $maxlen * 6.2 + 48 ) ); // dot+label-space + value-space
+		$th = ( count( $series ) + 1 ) * 16 + 12;
+		$labMax = (int) floor( ( $tw - 24 - 46 ) / 6.2 ); // value ke liye ~46px reserve
+
+		for ( $j = 0; $j < $n; $j++ ) {
+		    $cx = $xx( $j ); $hx = $cx - $slot / 2;
+		    $tx = $cx + 12; if ( $tx + $tw > $W - 2 ) { $tx = $cx - 12 - $tw; }
+		    $ty = $mT + 4;
+
+		    $tip = '<g class="as-tip"><rect x="' . round($tx,2) . '" y="' . $ty . '" width="' . $tw . '" height="' . $th . '" rx="6" fill="#fff" stroke="#e2e2e2"/>'
+		         . '<text x="' . ( $tx + 12 ) . '" y="' . ( $ty + 18 ) . '" font-size="11.5" font-weight="700" fill="#333">' . esc_html( $cats[$j] ) . '</text>';
+		    $ly = $ty + 36;
+		    foreach ( $series as $s ) {
+		        $val = rtrim(rtrim(number_format($s['vals'][$j],2,'.',''),'0'),'.');
+		        $labTxt = $s['label'];
+		        if ( $labMax > 1 && strlen( $labTxt ) > $labMax ) { $labTxt = substr( $labTxt, 0, $labMax - 1 ) . '…'; }
+		        $tip .= '<circle cx="' . ( $tx + 14 ) . '" cy="' . ( $ly - 4 ) . '" r="4" fill="' . esc_attr( $s['c0'] ) . '"/>'
+		              . '<text x="' . ( $tx + 24 ) . '" y="' . $ly . '" font-size="11" fill="#555">' . esc_html( $labTxt ) . '</text>'
+		              . '<text x="' . ( $tx + $tw - 12 ) . '" y="' . $ly . '" text-anchor="end" font-size="11" font-weight="600" fill="#333">' . $val . '</text>';
+		        $ly += 16;
+		    }
+		    $tip .= '</g>';
+		    $hovers .= '<g class="as-hc"><line class="as-guide" x1="' . round($cx,2) . '" y1="' . $mT . '" x2="' . round($cx,2) . '" y2="' . ( $mT + $pH ) . '" stroke="#bbb" stroke-dasharray="4 3"/>' . $tip . '<rect x="' . round($hx,2) . '" y="' . $mT . '" width="' . round($slot,2) . '" height="' . $pH . '" fill="transparent"/></g>';
+		}
+
+		// legend (HTML)
+		$legend = '<div class="as-legend">';
+		foreach ( $series as $s ) {
+		    $legend .= '<span class="as-leg"><span class="as-sw" style="background:linear-gradient(' . esc_attr( $s['c0'] ) . ',' . esc_attr( $s['c1'] ) . ');"></span>' . esc_html( $s['label'] ) . '</span>';
+		}
+		$legend .= '</div>';
+
+		// CSS
+		$wrapCode .= '<style>
+		.' . $chart_id . '{font-family:inherit;max-width:820px;margin:0 auto;padding:18px 12px;box-sizing:border-box;}
+		.' . $chart_id . ' .as-title{font-size:18px;font-weight:600;color:#222;margin:0 0 6px;}
+		.' . $chart_id . ' .as-legend{display:flex;flex-wrap:wrap;gap:14px;margin:0 0 8px;}
+		.' . $chart_id . ' .as-leg{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:#555;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+		.' . $chart_id . ' .as-sw{width:14px;height:10px;border-radius:2px;display:inline-block;flex:0 0 auto;}
+		.' . $chart_id . ' svg{display:block;width:100%;height:auto;}
+		.' . $chart_id . ' .as-tip,.' . $chart_id . ' .as-guide{opacity:0;transition:opacity .12s;pointer-events:none;}
+		.' . $chart_id . ' .as-hc:hover .as-tip,.' . $chart_id . ' .as-hc:hover .as-guide{opacity:1;}
+		</style>';
+
+		// assemble
+		$wrapCode .= '<div class="' . esc_attr( $chart_id ) . '">';
+		if ( $as_title !== '' ) { $wrapCode .= '<div class="as-title">' . esc_html( $as_title ) . '</div>'; }
+		$wrapCode .= $legend;
+		$wrapCode .= '<svg viewBox="0 0 ' . $W . ' ' . $H . '" preserveAspectRatio="xMidYMid meet"><defs>' . $defs . '</defs>' . $grid . $areas . $ylabels . $xlabels . $hovers . '</svg></div>';
+		break;
+
+		case 'skt_donutpattern':
+			static $don_counter = 0;
+			$don_counter++;
+			$wrapCode = '';
+			$chart_id = 'don_' . $don_counter;
+
+			// --- attributes ---
+			$raw        = ( isset( $atts ) && is_array( $atts ) ) ? $atts : array();
+			$don_title  = ! empty( $raw['chart_title'] ) ? sanitize_text_field( $raw['chart_title'] ) : '';
+			$size       = ! empty( $raw['size'] )      ? (int) $raw['size']      : 240;
+			$thick      = ! empty( $raw['thickness'] ) ? (int) $raw['thickness'] : 36;
+			$center_sub = ! empty( $raw['center_sub'] )  ? sanitize_text_field( $raw['center_sub'] )  : '';
+			$center_txt = isset( $raw['center_text'] ) ? sanitize_text_field( $raw['center_text'] ) : null;
+
+			// default palette + pattern cycle
+			$palette  = array( '#5B8FF9', '#61DDAA', '#F6BD16', '#7262FD', '#78D3F8', '#F6903D', '#008685' );
+			$patcycle = array( 'dots', 'lines', 'grid', 'vline', 'hline', 'solid' );
+
+			// pattern markup builder (inline, no URL)
+			$pat = function( $type, $color, $id ) {
+			    $bg = '<rect width="8" height="8" fill="' . $color . '" fill-opacity="0.16"/>';
+			    $extra = ''; $motif = '';
+			    switch ( $type ) {
+			        case 'solid':
+			            return '<pattern id="' . $id . '" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="' . $color . '"/></pattern>';
+			        case 'lines':  $motif = '<rect x="3" width="2.4" height="8" fill="' . $color . '"/>'; $extra = ' patternTransform="rotate(45)"'; break;
+			        case 'vline':  $motif = '<rect x="3" width="2.4" height="8" fill="' . $color . '"/>'; break;
+			        case 'hline':  $motif = '<rect y="3" width="8" height="2.4" fill="' . $color . '"/>'; break;
+			        case 'grid':   $motif = '<rect x="3" width="2" height="8" fill="' . $color . '"/><rect y="3" width="8" height="2" fill="' . $color . '"/>'; break;
+			        case 'dots':
+			        default:       $motif = '<circle cx="4" cy="4" r="1.7" fill="' . $color . '"/>'; break;
+			    }
+			    return '<pattern id="' . $id . '" width="8" height="8" patternUnits="userSpaceOnUse"' . $extra . '>' . $bg . $motif . '</pattern>';
+			};
+
+			// --- [skill label="" value="" pattern="" color=""] rows ---
+			preg_match_all( '/\[skill\s+([^\]]+)\]/', $content, $skill_matches, PREG_SET_ORDER );
+			$rows = array();
+			foreach ( $skill_matches as $idx => $sk ) {
+			    preg_match_all( '/(\w+)="([^"]*)"/', $sk[1], $attr_m, PREG_SET_ORDER );
+			    $pairs = array();
+			    foreach ( $attr_m as $a ) { $pairs[ $a[1] ] = $a[2]; }
+			    $label = isset( $pairs['label'] ) ? sanitize_text_field( $pairs['label'] )
+			           : ( isset( $pairs['title'] ) ? sanitize_text_field( $pairs['title'] ) : '' );
+			    $rows[] = array(
+			        'label'   => $label,
+			        'value'   => isset( $pairs['value'] ) ? max( 0, (float) $pairs['value'] ) : 0,
+			        'color'   => ! empty( $pairs['color'] )   ? sanitize_text_field( $pairs['color'] )            : $palette[ $idx % count( $palette ) ],
+			        'pattern' => ! empty( $pairs['pattern'] ) ? strtolower( sanitize_text_field( $pairs['pattern'] ) ) : $patcycle[ $idx % count( $patcycle ) ],
+			    );
+			}
+			if ( empty( $rows ) ) { return ''; }
+
+			$total = 0; foreach ( $rows as $r ) { $total += $r['value']; }
+			if ( $total <= 0 ) { return ''; }
+
+			// --- geometry ---
+			$cx = $cy = $size / 2;
+			$r  = $size / 2 - $thick / 2 - 6;
+			$C  = 2 * M_PI * $r;
+
+			// --- defs + slices ---
+			$defs = ''; $slices = ''; $cum = 0;
+			foreach ( $rows as $k => $row ) {
+			    $pid  = $chart_id . '_p' . $k;
+			    $defs .= $pat( $row['pattern'], $row['color'], $pid );
+
+			    $frac = $row['value'] / $total;
+			    $len  = $frac * $C;
+			    $deg  = -90 + $cum * 360;
+			    $cum += $frac;
+			    $pct  = round( $frac * 100 );
+			    $vt   = rtrim( rtrim( number_format( $row['value'], 2, '.', ',' ), '0' ), '.' );
+
+			    $slices .= '<circle class="ds-slice" cx="' . $cx . '" cy="' . $cy . '" r="' . round( $r, 2 ) . '" fill="none" stroke="url(#' . esc_attr( $pid ) . ')" stroke-dasharray="' . round( $len, 2 ) . ' ' . round( $C - $len, 2 ) . '" transform="rotate(' . round( $deg, 2 ) . ' ' . $cx . ' ' . $cy . ')"><title>' . esc_html( $row['label'] . ': ' . $vt . ' (' . $pct . '%)' ) . '</title></circle>';
+			}
+
+			// center text
+			$total_txt = rtrim( rtrim( number_format( $total, 2, '.', ',' ), '0' ), '.' );
+			$center = ( $center_txt === null ) ? $total_txt : $center_txt;
+			$center_svg = '<text x="' . $cx . '" y="' . ( $cy - ( $center_sub !== '' ? 6 : 0 ) ) . '" text-anchor="middle" dominant-baseline="central" font-size="' . (int) max( 16, $size / 9 ) . '" font-weight="700" fill="#333">' . esc_html( $center ) . '</text>';
+			if ( $center_sub !== '' ) {
+			    $center_svg .= '<text x="' . $cx . '" y="' . ( $cy + 16 ) . '" text-anchor="middle" font-size="12" fill="#999">' . esc_html( $center_sub ) . '</text>';
+			}
+
+			// --- legend (HTML, pattern swatches) ---
+			$legend = '<div class="ds-legend">';
+			foreach ( $rows as $k => $row ) {
+			    $lpid = $chart_id . '_lp' . $k;
+			    $pct  = round( ( $row['value'] / $total ) * 100 );
+			    $vt   = rtrim( rtrim( number_format( $row['value'], 2, '.', ',' ), '0' ), '.' );
+			    $sw   = '<svg class="ds-sw" width="16" height="16"><defs>' . $pat( $row['pattern'], $row['color'], $lpid ) . '</defs><rect width="16" height="16" rx="3" fill="url(#' . esc_attr( $lpid ) . ')"/></svg>';
+			    $legend .= '<span class="ds-leg">' . $sw . '<span>' . esc_html( $row['label'] ) . ' <b>' . esc_html( $vt ) . '</b><span class="pct">(' . $pct . '%)</span></span></span>';
+			}
+			$legend .= '</div>';
+
+			// --- CSS ---
+			$wrapCode .= '<style>
+			.' . $chart_id . '{font-family:inherit;max-width:560px;margin:0 auto;padding:18px 12px;box-sizing:border-box;}
+			.' . $chart_id . ' .ds-title{text-align:center;font-size:18px;font-weight:600;color:#222;margin:0 0 12px;}
+			.' . $chart_id . ' .ds-body{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:20px;}
+			.' . $chart_id . ' .ds-donut{width:' . (int) $size . 'px;max-width:100%;height:auto;flex:0 0 auto;}
+			.' . $chart_id . ' .ds-slice{stroke-width:' . (int) $thick . 'px;cursor:default;transition:stroke-width .2s ease;}
+			.' . $chart_id . ' .ds-slice:hover{stroke-width:' . ( (int) $thick + 8 ) . 'px;}
+			.' . $chart_id . ' .ds-legend{display:flex;flex-direction:column;gap:8px;}
+			.' . $chart_id . ' .ds-leg{display:flex;align-items:center;gap:8px;font-size:13px;color:#555;}
+			.' . $chart_id . ' .ds-leg b{color:#222;font-weight:600;}
+			.' . $chart_id . ' .ds-leg .pct{color:#999;margin-left:3px;}
+			.' . $chart_id . ' .ds-sw{flex:0 0 auto;border:1px solid rgba(0,0,0,.08);border-radius:3px;}
+			</style>';
+
+			// --- assemble ---
+			$wrapCode .= '<div class="' . esc_attr( $chart_id ) . '">';
+			if ( $don_title !== '' ) { $wrapCode .= '<div class="ds-title">' . esc_html( $don_title ) . '</div>'; }
+			$wrapCode .= '<div class="ds-body">';
+			$wrapCode .= '<svg class="ds-donut" viewBox="0 0 ' . (int) $size . ' ' . (int) $size . '"><defs>' . $defs . '</defs>' . $slices . $center_svg . '</svg>';
+			$wrapCode .= $legend;
+			$wrapCode .= '</div></div>';
+		break;
+
+		case 'skt_isometric':
+			static $iso_counter = 0;
+			$iso_counter++;
+			$wrapCode = '';
+			$chart_id = 'iso_' . $iso_counter;
+
+			// --- attributes ---
+			$raw       = ( isset( $atts ) && is_array( $atts ) ) ? $atts : array();
+			$iso_title = ! empty( $raw['chart_title'] ) ? sanitize_text_field( $raw['chart_title'] ) : '';
+			$max_val   = ( isset( $raw['max'] ) && $raw['max'] !== '' ) ? (float) $raw['max'] : 0;
+			$maxH      = ! empty( $raw['height'] ) ? (int) $raw['height'] : 210;  // tallest bar (iso units)
+			$cell      = ! empty( $raw['cell'] )   ? (int) $raw['cell']   : 64;   // footprint side
+			$gap       = ! empty( $raw['gap'] )    ? (int) $raw['gap']    : 24;
+
+			$palette = array( '#5B8FF9', '#F6BD16', '#61DDAA', '#7262FD', '#FF6B6B', '#36CFC9', '#FF9D4D' );
+
+			// shade helper (f<1 = darker, f>1 = lighter); non-hex -> as-is
+			$shade = function( $hex, $f ) {
+			    if ( ! preg_match( '/^#?[0-9a-fA-F]{3}$|^#?[0-9a-fA-F]{6}$/', $hex ) ) { return $hex; }
+			    $hex = ltrim( $hex, '#' );
+			    if ( strlen( $hex ) === 3 ) { $hex = $hex[0].$hex[0].$hex[1].$hex[1].$hex[2].$hex[2]; }
+			    $r = min( 255, max( 0, (int) round( hexdec( substr($hex,0,2) ) * $f ) ) );
+			    $g = min( 255, max( 0, (int) round( hexdec( substr($hex,2,2) ) * $f ) ) );
+			    $b = min( 255, max( 0, (int) round( hexdec( substr($hex,4,2) ) * $f ) ) );
+			    return sprintf( '#%02x%02x%02x', $r, $g, $b );
+			};
+
+			// --- [skill label="" value="" color=""] rows ---
+			preg_match_all( '/\[skill\s+([^\]]+)\]/', $content, $skill_matches, PREG_SET_ORDER );
+			$rows = array();
+			foreach ( $skill_matches as $idx => $sk ) {
+			    preg_match_all( '/(\w+)="([^"]*)"/', $sk[1], $attr_m, PREG_SET_ORDER );
+			    $pairs = array(); foreach ( $attr_m as $a ) { $pairs[ $a[1] ] = $a[2]; }
+			    $label = isset( $pairs['label'] ) ? sanitize_text_field( $pairs['label'] )
+			           : ( isset( $pairs['title'] ) ? sanitize_text_field( $pairs['title'] ) : '' );
+			    $rows[] = array(
+			        'label' => $label,
+			        'value' => isset( $pairs['value'] ) ? max( 0, (float) $pairs['value'] ) : 0,
+			        'color' => ! empty( $pairs['color'] ) ? sanitize_text_field( $pairs['color'] ) : $palette[ $idx % count( $palette ) ],
+			    );
+			}
+			if ( empty( $rows ) ) { return ''; }
+
+			if ( $max_val <= 0 ) { foreach ( $rows as $r ) { if ( $r['value'] > $max_val ) { $max_val = $r['value']; } } }
+			if ( $max_val <= 0 ) { $max_val = 1; }
+
+			// --- isometric projection ---
+			$K  = 0.8660254;
+			$px = function( $x, $y ) use ( $K ) { return ( $x - $y ) * $K; };
+			$py = function( $x, $y, $z ) { return ( $x + $y ) * 0.5 - $z; };
+
+			$minX = INF; $minY = INF; $maxX = -INF; $maxY = -INF;
+			$acc = function( $p ) use ( &$minX, &$minY, &$maxX, &$maxY ) {
+			    if ( $p[0] < $minX ) $minX = $p[0]; if ( $p[0] > $maxX ) $maxX = $p[0];
+			    if ( $p[1] < $minY ) $minY = $p[1]; if ( $p[1] > $maxY ) $maxY = $p[1];
+			};
+
+			$bars = array();
+			foreach ( $rows as $i => $r ) {
+			    $x0 = $i * ( $cell + $gap ); $x1 = $x0 + $cell; $y0 = 0; $y1 = $cell;
+			    $h  = max( 4, ( $r['value'] / $max_val ) * $maxH );
+
+			    $A1 = array( $px($x0,$y0), $py($x0,$y0,$h) );
+			    $B1 = array( $px($x1,$y0), $py($x1,$y0,$h) );
+			    $C1 = array( $px($x1,$y1), $py($x1,$y1,$h) );
+			    $D1 = array( $px($x0,$y1), $py($x0,$y1,$h) );
+			    $B0 = array( $px($x1,$y0), $py($x1,$y0,0) );
+			    $C0 = array( $px($x1,$y1), $py($x1,$y1,0) );
+			    $D0 = array( $px($x0,$y1), $py($x0,$y1,0) );
+
+			    foreach ( array($A1,$B1,$C1,$D1,$B0,$C0,$D0) as $p ) { $acc($p); }
+
+			    $minTopY = min( $A1[1], $B1[1], $C1[1], $D1[1] );
+			    $valP = array( ( $A1[0]+$B1[0]+$C1[0]+$D1[0] )/4, $minTopY );
+			    $labP = array( $px($x0+$cell/2,$y1), $py($x0+$cell/2,$y1,0) );
+			    $acc( array($valP[0],$valP[1]-12) ); $acc( array($labP[0],$labP[1]+18) );
+
+			    $bars[] = array(
+			        'top'   => array($A1,$B1,$C1,$D1),
+			        'right' => array($B0,$C0,$C1,$B1),
+			        'left'  => array($D0,$C0,$C1,$D1),
+			        'cTop'  => $shade($r['color'],1.15),
+			        'cRight'=> $shade($r['color'],0.82),
+			        'cLeft' => $shade($r['color'],0.66),
+			        'val'   => rtrim( rtrim( number_format($r['value'],2,'.',','), '0' ), '.' ),
+			        'valP'  => $valP, 'labP' => $labP, 'label' => $r['label'],
+			    );
+			}
+
+			$padX = 26; $padY = 32;
+			$tx = -$minX + $padX; $ty = -$minY + $padY;
+			$W  = ( $maxX - $minX ) + 2*$padX; $H = ( $maxY - $minY ) + 2*$padY;
+
+			$poly = function( $pts ) { $s=''; foreach ( $pts as $p ) { $s .= round($p[0],2).','.round($p[1],2).' '; } return trim($s); };
+
+			$svg = '<svg class="iso-svg" viewBox="0 0 '.round($W,2).' '.round($H,2).'"><g transform="translate('.round($tx,2).','.round($ty,2).')">';
+			foreach ( $bars as $b ) {
+			    $svg .= '<g class="iso-bar"><title>'.esc_html($b['label'].': '.$b['val']).'</title>'
+			          . '<polygon points="'.$poly($b['left']).'"  fill="'.esc_attr($b['cLeft']).'"/>'
+			          . '<polygon points="'.$poly($b['right']).'" fill="'.esc_attr($b['cRight']).'"/>'
+			          . '<polygon points="'.$poly($b['top']).'"   fill="'.esc_attr($b['cTop']).'"/>'
+			          . '<text class="iso-val" x="'.round($b['valP'][0],2).'" y="'.round($b['valP'][1]-8,2).'" text-anchor="middle">'.esc_html($b['val']).'</text>'
+			          . '<text class="iso-lab" x="'.round($b['labP'][0],2).'" y="'.round($b['labP'][1]+16,2).'" text-anchor="middle">'.esc_html($b['label']).'</text>'
+			          . '</g>';
+			}
+			$svg .= '</g></svg>';
+
+			// --- CSS ---
+			$wrapCode .= '<style>
+			.'.$chart_id.'{font-family:inherit;max-width:500px;margin:0 auto;padding:18px 12px;box-sizing:border-box;}
+			.'.$chart_id.' .iso-ttl{text-align:center;font-size:18px;font-weight:600;color:#222;margin:0 0 8px;}
+			.'.$chart_id.' .iso-svg{display:block;width:50%;height:auto;overflow:visible;}
+			.'.$chart_id.' .iso-bar{transition:filter .2s ease;cursor:default;}
+			.'.$chart_id.' .iso-bar:hover{filter:brightness(1.08);}
+			.'.$chart_id.' .iso-val{font-size:13px;font-weight:700;fill:#333;}
+			.'.$chart_id.' .iso-lab{font-size:12px;fill:#666;}
+			</style>';
+
+			$wrapCode .= '<div class="'.esc_attr($chart_id).'">';
+			if ( $iso_title !== '' ) { $wrapCode .= '<div class="iso-ttl">'.esc_html($iso_title).'</div>'; }
+			$wrapCode .= $svg . '</div>';
+		break;
+
+		case 'skt_areaneg':
+			static $an_counter = 0;
+			$an_counter++;
+			$wrapCode = '';
+			$chart_id = 'an_' . $an_counter;
+
+			// --- attributes ---
+			$raw      = ( isset( $atts ) && is_array( $atts ) ) ? $atts : array();
+			$an_title = ! empty( $raw['chart_title'] ) ? sanitize_text_field( $raw['chart_title'] ) : '';
+			$cats     = ! empty( $raw['categories'] ) ? array_map( 'trim', explode( ',', $raw['categories'] ) ) : array();
+			$ch_h     = ! empty( $raw['height'] ) ? (int) $raw['height'] : 360;
+			$fillop   = ( isset( $raw['fill_opacity'] ) && $raw['fill_opacity'] !== '' ) ? (float) $raw['fill_opacity'] : 0.55;
+			$smoothOn = ! ( isset( $raw['smooth'] ) && in_array( strtolower( $raw['smooth'] ), array( 'no', 'false', '0' ), true ) );
+
+			$palette = array( '#008FFB', '#00E396', '#FEB019', '#FF4560', '#775DD0' );
+
+			// --- [skill label="" values=""] series ---
+			preg_match_all( '/\[skill\s+([^\]]+)\]/', $content, $skill_matches, PREG_SET_ORDER );
+			$series = array(); $n = 0;
+			foreach ( $skill_matches as $idx => $sk ) {
+			    preg_match_all( '/(\w+)="([^"]*)"/', $sk[1], $attr_m, PREG_SET_ORDER );
+			    $pairs = array(); foreach ( $attr_m as $a ) { $pairs[ $a[1] ] = $a[2]; }
+			    $label = isset( $pairs['label'] ) ? sanitize_text_field( $pairs['label'] )
+			           : ( isset( $pairs['title'] ) ? sanitize_text_field( $pairs['title'] ) : ( 'Series ' . ( $idx + 1 ) ) );
+			    $vals = array();
+			    if ( isset( $pairs['values'] ) ) { foreach ( explode( ',', $pairs['values'] ) as $v ) { $vals[] = (float) trim( $v ); } }
+			    if ( count( $vals ) > $n ) { $n = count( $vals ); }
+			    $series[] = array(
+			        'label' => $label,
+			        'vals'  => $vals,
+			        'color' => ! empty( $pairs['color'] ) ? sanitize_text_field( $pairs['color'] ) : $palette[ $idx % count( $palette ) ],
+			    );
+			}
+			if ( empty( $series ) || $n < 2 ) { return ''; }
+			foreach ( $series as &$s ) { while ( count( $s['vals'] ) < $n ) { $s['vals'][] = 0; } } unset( $s );
+			for ( $j = count( $cats ); $j < $n; $j++ ) { $cats[] = (string) ( $j + 1 ); }
+
+			// --- y range (0 included) ---
+			$dmin = 0; $dmax = 0;
+			foreach ( $series as $s ) { foreach ( $s['vals'] as $v ) { if ( $v < $dmin ) $dmin = $v; if ( $v > $dmax ) $dmax = $v; } }
+			if ( $dmin == 0 && $dmax == 0 ) { $dmax = 1; }
+			$rng = $dmax - $dmin; if ( $rng <= 0 ) { $rng = 1; }
+			$rough = $rng / 5;
+			$mag   = pow( 10, floor( log10( $rough ) ) );
+			$normv = $rough / $mag;
+			$nice  = $normv <= 1 ? 1 : ( $normv <= 2 ? 2 : ( $normv <= 5 ? 5 : 10 ) );
+			$step  = $nice * $mag;
+			$niceMin = floor( $dmin / $step ) * $step;
+			$niceMax = ceil( $dmax / $step ) * $step;
+			if ( $niceMax <= $niceMin ) { $niceMax = $niceMin + $step; }
+
+			// --- geometry ---
+			$W = 780; $H = $ch_h; $mL = 46; $mR = 16; $mT = 14; $mB = 26;
+			$pW = $W - $mL - $mR; $pH = $H - $mT - $mB;
+			$xx = function( $j ) use ( $mL, $pW, $n ) { return $mL + ( $n > 1 ? $pW * $j / ( $n - 1 ) : 0 ); };
+			$yy = function( $v ) use ( $mT, $pH, $niceMin, $niceMax ) { return $mT + $pH * ( 1 - ( $v - $niceMin ) / ( $niceMax - $niceMin ) ); };
+			$base = $yy( 0 );
+
+			$smooth = function( $pts ) use ( $smoothOn ) {
+			    $m = count( $pts ); $d = '';
+			    if ( $m < 2 ) { return $d; }
+			    if ( ! $smoothOn ) { for ( $i = 1; $i < $m; $i++ ) { $d .= ' L' . round( $pts[$i][0], 2 ) . ',' . round( $pts[$i][1], 2 ); } return $d; }
+			    for ( $i = 0; $i < $m - 1; $i++ ) {
+			        $p0 = $pts[ $i == 0 ? 0 : $i - 1 ]; $p1 = $pts[ $i ]; $p2 = $pts[ $i + 1 ]; $p3 = $pts[ ( $i + 2 < $m ) ? $i + 2 : $m - 1 ];
+			        $c1x = $p1[0] + ( $p2[0] - $p0[0] ) / 6; $c1y = $p1[1] + ( $p2[1] - $p0[1] ) / 6;
+			        $c2x = $p2[0] - ( $p3[0] - $p1[0] ) / 6; $c2y = $p2[1] - ( $p3[1] - $p1[1] ) / 6;
+			        $d .= ' C' . round($c1x,2) . ',' . round($c1y,2) . ' ' . round($c2x,2) . ',' . round($c2y,2) . ' ' . round($p2[0],2) . ',' . round($p2[1],2);
+			    }
+			    return $d;
+			};
+
+			// --- areas (fill to zero) + lines + gradients ---
+			$defs = ''; $areas = ''; $lines = '';
+			foreach ( $series as $k => $s ) {
+			    $gid = $chart_id . '_g' . $k;
+			    $defs .= '<linearGradient id="' . esc_attr( $gid ) . '" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="' . esc_attr( $s['color'] ) . '" stop-opacity="' . $fillop . '"/><stop offset="100%" stop-color="' . esc_attr( $s['color'] ) . '" stop-opacity="0.05"/></linearGradient>';
+			    $pts = array();
+			    for ( $j = 0; $j < $n; $j++ ) { $pts[] = array( $xx( $j ), $yy( $s['vals'][$j] ) ); }
+			    $curve = 'M' . round($pts[0][0],2) . ',' . round($pts[0][1],2) . $smooth( $pts );
+			    $d = $curve . ' L' . round($pts[$n-1][0],2) . ',' . round($base,2) . ' L' . round($pts[0][0],2) . ',' . round($base,2) . ' Z';
+			    $areas .= '<path d="' . $d . '" fill="url(#' . esc_attr( $gid ) . ')"/>';
+			    $lines .= '<path d="' . $curve . '" fill="none" stroke="' . esc_attr( $s['color'] ) . '" stroke-width="2"/>';
+			}
+
+			// --- grid + labels (zero line highlighted) ---
+			$grid = ''; $ylabels = '';
+			for ( $v = $niceMin; $v <= $niceMax + 0.0001; $v += $step ) {
+			    $gy = $yy( $v ); $isZero = ( abs( $v ) < 0.0001 );
+			    $grid    .= '<line x1="' . $mL . '" y1="' . round($gy,2) . '" x2="' . ( $W - $mR ) . '" y2="' . round($gy,2) . '" stroke="' . ( $isZero ? '#aaa' : '#eee' ) . '" stroke-width="' . ( $isZero ? '1.3' : '1' ) . '"/>';
+			    $ylabels .= '<text x="' . ( $mL - 6 ) . '" y="' . round($gy + 3,2) . '" text-anchor="end" font-size="11" fill="#999">' . rtrim(rtrim(number_format($v,2,'.',''),'0'),'.') . '</text>';
+			}
+			$xlabels = '';
+			for ( $j = 0; $j < $n; $j++ ) { $xlabels .= '<text x="' . round($xx($j),2) . '" y="' . ( $H - 8 ) . '" text-anchor="middle" font-size="11" fill="#999">' . esc_html( $cats[$j] ) . '</text>'; }
+
+			// --- hover guide + tooltip ---
+			$hovers = ''; $slot = $pW / ( $n - 1 ); $tw = 130; $th = ( count( $series ) + 1 ) * 16 + 12;
+			for ( $j = 0; $j < $n; $j++ ) {
+			    $cx = $xx( $j ); $hx = $cx - $slot / 2;
+			    $tx = $cx + 10; if ( $tx + $tw > $W - 2 ) { $tx = $cx - 10 - $tw; }
+			    $ty = $mT + 4;
+			    $tip = '<g class="an-tip"><rect x="' . round($tx,2) . '" y="' . $ty . '" width="' . $tw . '" height="' . $th . '" rx="5" fill="#fff" stroke="#ddd"/><text x="' . ( $tx + 10 ) . '" y="' . ( $ty + 18 ) . '" font-size="11.5" font-weight="700" fill="#333">' . esc_html( $cats[$j] ) . '</text>';
+			    $ly = $ty + 36;
+			    foreach ( $series as $s ) {
+			        $val = rtrim(rtrim(number_format($s['vals'][$j],2,'.',''),'0'),'.');
+			        $tip .= '<circle cx="' . ( $tx + 14 ) . '" cy="' . ( $ly - 4 ) . '" r="4" fill="' . esc_attr( $s['color'] ) . '"/><text x="' . ( $tx + 24 ) . '" y="' . $ly . '" font-size="11" fill="#555">' . esc_html( $s['label'] ) . '</text><text x="' . ( $tx + $tw - 10 ) . '" y="' . $ly . '" text-anchor="end" font-size="11" font-weight="600" fill="#333">' . $val . '</text>';
+			        $ly += 16;
+			    }
+			    $tip .= '</g>';
+			    $hovers .= '<g class="an-hc"><line class="an-guide" x1="' . round($cx,2) . '" y1="' . $mT . '" x2="' . round($cx,2) . '" y2="' . ( $mT + $pH ) . '" stroke="#bbb" stroke-dasharray="4 3"/>' . $tip . '<rect x="' . round($hx,2) . '" y="' . $mT . '" width="' . round($slot,2) . '" height="' . $pH . '" fill="transparent"/></g>';
+			}
+
+			// --- legend ---
+			$legend = '<div class="an-legend">';
+			foreach ( $series as $s ) { $legend .= '<span class="an-leg"><span class="an-sw" style="background:' . esc_attr( $s['color'] ) . ';"></span>' . esc_html( $s['label'] ) . '</span>'; }
+			$legend .= '</div>';
+
+			// --- CSS ---
+			$wrapCode .= '<style>
+			.' . $chart_id . '{font-family:inherit;max-width:820px;margin:0 auto;padding:18px 12px;box-sizing:border-box;}
+			.' . $chart_id . ' .an-title{font-size:18px;font-weight:600;color:#222;margin:0 0 6px;}
+			.' . $chart_id . ' .an-legend{display:flex;flex-wrap:wrap;gap:14px;margin:0 0 8px;}
+			.' . $chart_id . ' .an-leg{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:#555;}
+			.' . $chart_id . ' .an-sw{width:12px;height:12px;border-radius:50%;display:inline-block;}
+			.' . $chart_id . ' svg{display:block;width:100%;height:auto;}
+			.' . $chart_id . ' .an-tip,.' . $chart_id . ' .an-guide{opacity:0;transition:opacity .12s;pointer-events:none;}
+			.' . $chart_id . ' .an-hc:hover .an-tip,.' . $chart_id . ' .an-hc:hover .an-guide{opacity:1;}
+			</style>';
+
+			// --- assemble ---
+			$wrapCode .= '<div class="' . esc_attr( $chart_id ) . '">';
+			if ( $an_title !== '' ) { $wrapCode .= '<div class="an-title">' . esc_html( $an_title ) . '</div>'; }
+			$wrapCode .= $legend;
+			$wrapCode .= '<svg viewBox="0 0 ' . $W . ' ' . $H . '" preserveAspectRatio="xMidYMid meet"><defs>' . $defs . '</defs>' . $grid . $areas . $lines . $ylabels . $xlabels . $hovers . '</svg></div>';
+			break;
+
+		case 'skt_columnneg':
+			static $cn_counter = 0;
+			$cn_counter++;
+			$wrapCode = '';
+			$chart_id = 'cn_' . $cn_counter;
+
+			// --- attributes ---
+			$raw       = ( isset( $atts ) && is_array( $atts ) ) ? $atts : array();
+			$cn_title  = ! empty( $raw['chart_title'] ) ? sanitize_text_field( $raw['chart_title'] ) : '';
+			$pos_color = ! empty( $raw['pos_color'] ) ? sanitize_text_field( $raw['pos_color'] ) : '#008FFB';
+			$neg_color = ! empty( $raw['neg_color'] ) ? sanitize_text_field( $raw['neg_color'] ) : '#FF4560';
+			$ch_h      = ! empty( $raw['height'] )    ? (int) $raw['height']    : 360;
+			$bw_pct    = ! empty( $raw['bar_width'] ) ? (int) $raw['bar_width'] : 60;
+			$show_val  = ! ( isset( $raw['show_value'] ) && in_array( strtolower( $raw['show_value'] ), array( 'no', 'false', '0' ), true ) );
+
+			// --- [skill label="" value=""] columns ---
+			preg_match_all( '/\[skill\s+([^\]]+)\]/', $content, $skill_matches, PREG_SET_ORDER );
+			$rows = array();
+			foreach ( $skill_matches as $sk ) {
+			    preg_match_all( '/(\w+)="([^"]*)"/', $sk[1], $attr_m, PREG_SET_ORDER );
+			    $pairs = array(); foreach ( $attr_m as $a ) { $pairs[ $a[1] ] = $a[2]; }
+			    $label = isset( $pairs['label'] ) ? sanitize_text_field( $pairs['label'] )
+			           : ( isset( $pairs['title'] ) ? sanitize_text_field( $pairs['title'] ) : '' );
+			    $rows[] = array(
+			        'label' => $label,
+			        'value' => isset( $pairs['value'] ) ? (float) $pairs['value'] : 0,
+			        'color' => ! empty( $pairs['color'] ) ? sanitize_text_field( $pairs['color'] ) : '',
+			    );
+			}
+			if ( empty( $rows ) ) { return ''; }
+			$n = count( $rows );
+
+			// --- y range (0 included) ---
+			$dmin = 0; $dmax = 0;
+			foreach ( $rows as $r ) { if ( $r['value'] < $dmin ) $dmin = $r['value']; if ( $r['value'] > $dmax ) $dmax = $r['value']; }
+			if ( $dmin == 0 && $dmax == 0 ) { $dmax = 1; }
+			$rng = $dmax - $dmin; if ( $rng <= 0 ) { $rng = 1; }
+			$rough = $rng / 5; $mag = pow( 10, floor( log10( $rough ) ) ); $normv = $rough / $mag;
+			$nice = $normv <= 1 ? 1 : ( $normv <= 2 ? 2 : ( $normv <= 5 ? 5 : 10 ) ); $step = $nice * $mag;
+			$niceMin = floor( $dmin / $step ) * $step; $niceMax = ceil( $dmax / $step ) * $step;
+			if ( $niceMax <= $niceMin ) { $niceMax = $niceMin + $step; }
+
+			// --- geometry ---
+			$W = 780; $H = $ch_h; $mL = 46; $mR = 16; $mT = 16; $mB = 26;
+			$pW = $W - $mL - $mR; $pH = $H - $mT - $mB;
+			$slot = $pW / $n; $bw = $slot * ( $bw_pct / 100 );
+			$yy = function( $v ) use ( $mT, $pH, $niceMin, $niceMax ) { return $mT + $pH * ( 1 - ( $v - $niceMin ) / ( $niceMax - $niceMin ) ); };
+			$y0 = $yy( 0 );
+
+			// --- grid + y labels (zero line highlighted) ---
+			$grid = ''; $ylabels = '';
+			for ( $v = $niceMin; $v <= $niceMax + 0.0001; $v += $step ) {
+			    $gy = $yy( $v ); $isZero = ( abs( $v ) < 0.0001 );
+			    $grid    .= '<line x1="' . $mL . '" y1="' . round($gy,2) . '" x2="' . ( $W - $mR ) . '" y2="' . round($gy,2) . '" stroke="' . ( $isZero ? '#aaa' : '#eee' ) . '" stroke-width="' . ( $isZero ? '1.3' : '1' ) . '"/>';
+			    $ylabels .= '<text x="' . ( $mL - 6 ) . '" y="' . round($gy + 3,2) . '" text-anchor="end" font-size="11" fill="#999">' . rtrim(rtrim(number_format($v,2,'.',''),'0'),'.') . '</text>';
+			}
+
+			// --- columns + x labels ---
+			$bars = ''; $xlabels = '';
+			foreach ( $rows as $j => $r ) {
+			    $cx  = $mL + $slot * ( $j + 0.5 );
+			    $col = $r['color'] !== '' ? $r['color'] : ( $r['value'] >= 0 ? $pos_color : $neg_color );
+			    $yv  = $yy( $r['value'] );
+			    $top = min( $yv, $y0 ); $hh = abs( $yv - $y0 ); if ( $hh < 1 ) $hh = 1;
+			    $vt  = rtrim( rtrim( number_format( $r['value'], 2, '.', ',' ), '0' ), '.' );
+
+			    $bars .= '<g class="cn-bar"><title>' . esc_html( $r['label'] . ': ' . $vt ) . '</title>'
+			           . '<rect x="' . round($cx - $bw/2,2) . '" y="' . round($top,2) . '" width="' . round($bw,2) . '" height="' . round($hh,2) . '" rx="2" fill="' . esc_attr( $col ) . '"/>';
+			    if ( $show_val ) {
+			        $vy = $r['value'] >= 0 ? $top - 5 : $top + $hh + 13;
+			        $bars .= '<text class="cn-val" x="' . round($cx,2) . '" y="' . round($vy,2) . '" text-anchor="middle">' . esc_html( $vt ) . '</text>';
+			    }
+			    $bars .= '</g>';
+			    $xlabels .= '<text x="' . round($cx,2) . '" y="' . ( $H - 8 ) . '" text-anchor="middle" font-size="11" fill="#999">' . esc_html( $r['label'] ) . '</text>';
+			}
+
+			// --- CSS ---
+			$wrapCode .= '<style>
+			.' . $chart_id . '{font-family:inherit;max-width:820px;margin:0 auto;padding:18px 12px;box-sizing:border-box;}
+			.' . $chart_id . ' .cn-title{font-size:18px;font-weight:600;color:#222;margin:0 0 8px;}
+			.' . $chart_id . ' svg{display:block;width:100%;height:auto;}
+			.' . $chart_id . ' .cn-bar{transition:filter .15s ease;cursor:default;}
+			.' . $chart_id . ' .cn-bar:hover{filter:brightness(1.1);}
+			.' . $chart_id . ' .cn-val{font-size:11px;font-weight:600;fill:#555;}
+			</style>';
+
+			// --- assemble ---
+			$wrapCode .= '<div class="' . esc_attr( $chart_id ) . '">';
+			if ( $cn_title !== '' ) { $wrapCode .= '<div class="cn-title">' . esc_html( $cn_title ) . '</div>'; }
+			$wrapCode .= '<svg viewBox="0 0 ' . $W . ' ' . $H . '" preserveAspectRatio="xMidYMid meet">' . $grid . $bars . $ylabels . $xlabels . '</svg></div>';
+		break;
+
+		case 'skt_pyramid':
+			static $py_counter = 0;
+			$py_counter++;
+			$wrapCode = '';
+			$chart_id = 'py_' . $py_counter;
+
+			// --- attributes ---
+			$raw         = ( isset( $atts ) && is_array( $atts ) ) ? $atts : array();
+			$py_title    = ! empty( $raw['chart_title'] )  ? sanitize_text_field( $raw['chart_title'] )  : '';
+			$left_label  = ! empty( $raw['left_label'] )   ? sanitize_text_field( $raw['left_label'] )   : 'Females';
+			$right_label = ! empty( $raw['right_label'] )  ? sanitize_text_field( $raw['right_label'] )  : 'Males';
+			$left_color  = ! empty( $raw['left_color'] )   ? sanitize_text_field( $raw['left_color'] )   : '#FF4560';
+			$right_color = ! empty( $raw['right_color'] )  ? sanitize_text_field( $raw['right_color'] )  : '#008FFB';
+			$unit        = isset( $raw['unit'] ) ? sanitize_text_field( $raw['unit'] ) : '';
+			$row_h       = ! empty( $raw['row_height'] )   ? (int) $raw['row_height']   : 30;
+			$bh_pct      = ! empty( $raw['bar_height'] )   ? (int) $raw['bar_height']   : 70;
+			$center_w    = ! empty( $raw['center_width'] ) ? (int) $raw['center_width'] : 72;
+			$show_val    = ( isset( $raw['show_value'] ) && in_array( strtolower( $raw['show_value'] ), array( 'yes', 'true', '1' ), true ) );
+
+			// --- [skill label="" male="" female=""] rows (negative do to bhi abs le lega) ---
+			preg_match_all( '/\[skill\s+([^\]]+)\]/', $content, $skill_matches, PREG_SET_ORDER );
+			$rows = array();
+			foreach ( $skill_matches as $sk ) {
+			    preg_match_all( '/(\w+)="([^"]*)"/', $sk[1], $attr_m, PREG_SET_ORDER );
+			    $pairs = array(); foreach ( $attr_m as $a ) { $pairs[ $a[1] ] = $a[2]; }
+			    $label = isset( $pairs['label'] ) ? sanitize_text_field( $pairs['label'] )
+			           : ( isset( $pairs['title'] ) ? sanitize_text_field( $pairs['title'] ) : '' );
+			    $rows[] = array(
+			        'label' => $label,
+			        'right' => isset( $pairs['male'] )   ? abs( (float) $pairs['male'] )   : ( isset( $pairs['right'] ) ? abs( (float) $pairs['right'] ) : 0 ),
+			        'left'  => isset( $pairs['female'] ) ? abs( (float) $pairs['female'] ) : ( isset( $pairs['left'] )  ? abs( (float) $pairs['left'] )  : 0 ),
+			    );
+			}
+			if ( empty( $rows ) ) { return ''; }
+			$n = count( $rows );
+
+			// --- max magnitude -> nice ---
+			$dmax = 0; foreach ( $rows as $r ) { $dmax = max( $dmax, $r['left'], $r['right'] ); }
+			if ( $dmax <= 0 ) { $dmax = 1; }
+			$rough = $dmax / 4; $mag = pow( 10, floor( log10( $rough ) ) ); $normv = $rough / $mag;
+			$nice = $normv <= 1 ? 1 : ( $normv <= 2 ? 2 : ( $normv <= 5 ? 5 : 10 ) ); $step = $nice * $mag;
+			$niceMax = ceil( $dmax / $step ) * $step; if ( $niceMax <= 0 ) { $niceMax = $step; }
+
+			// --- geometry ---
+			$W = 780; $mL = 20; $mR = 20; $mT = 42; $mB = 28;
+			$midX = $W / 2; $cxL = $midX - $center_w / 2; $cxR = $midX + $center_w / 2;
+			$leftW = $cxL - $mL; $rightW = ( $W - $mR ) - $cxR;
+			$pH = $n * $row_h; $H = $mT + $pH + $mB; $bh = $row_h * ( $bh_pct / 100 );
+
+			// --- axis ticks + gridlines (symmetric) ---
+			$grid = ''; $axis = '';
+			for ( $t = $step; $t <= $niceMax + 0.0001; $t += $step ) {
+			    $gxR = $cxR + ( $t / $niceMax ) * $rightW; $gxL = $cxL - ( $t / $niceMax ) * $leftW;
+			    $lbl = rtrim( rtrim( number_format( $t, 2, '.', '' ), '0' ), '.' ) . $unit;
+			    $grid .= '<line x1="' . round($gxR,2) . '" y1="' . $mT . '" x2="' . round($gxR,2) . '" y2="' . ( $mT + $pH ) . '" stroke="#eee"/>';
+			    $grid .= '<line x1="' . round($gxL,2) . '" y1="' . $mT . '" x2="' . round($gxL,2) . '" y2="' . ( $mT + $pH ) . '" stroke="#eee"/>';
+			    $axis .= '<text x="' . round($gxR,2) . '" y="' . ( $H - 8 ) . '" text-anchor="middle" font-size="10.5" fill="#999">' . esc_html( $lbl ) . '</text>';
+			    $axis .= '<text x="' . round($gxL,2) . '" y="' . ( $H - 8 ) . '" text-anchor="middle" font-size="10.5" fill="#999">' . esc_html( $lbl ) . '</text>';
+			}
+			$grid .= '<line x1="' . round($cxR,2) . '" y1="' . $mT . '" x2="' . round($cxR,2) . '" y2="' . ( $mT + $pH ) . '" stroke="#ccc"/>';
+			$grid .= '<line x1="' . round($cxL,2) . '" y1="' . $mT . '" x2="' . round($cxL,2) . '" y2="' . ( $mT + $pH ) . '" stroke="#ccc"/>';
+
+			// --- header (group names) ---
+			$header  = '<text x="' . round( ( $cxR + ( $W - $mR ) ) / 2, 2 ) . '" y="' . ( $mT - 16 ) . '" text-anchor="middle" font-size="13" font-weight="700" fill="' . esc_attr( $right_color ) . '">' . esc_html( $right_label ) . '</text>';
+			$header .= '<text x="' . round( ( $mL + $cxL ) / 2, 2 ) . '" y="' . ( $mT - 16 ) . '" text-anchor="middle" font-size="13" font-weight="700" fill="' . esc_attr( $left_color ) . '">' . esc_html( $left_label ) . '</text>';
+
+			// --- bars + center age labels ---
+			$bars = '';
+			foreach ( $rows as $j => $r ) {
+			    $cy = $mT + $row_h * $j + $row_h / 2;
+			    $rw = ( $r['right'] / $niceMax ) * $rightW; $lw = ( $r['left'] / $niceMax ) * $leftW;
+			    $rvt = rtrim( rtrim( number_format( $r['right'], 2, '.', ',' ), '0' ), '.' );
+			    $lvt = rtrim( rtrim( number_format( $r['left'], 2, '.', ',' ), '0' ), '.' );
+
+			    $bars .= '<g class="py-bar"><title>' . esc_html( $right_label . ' ' . $r['label'] . ': ' . $rvt . $unit ) . '</title><rect x="' . round($cxR,2) . '" y="' . round($cy - $bh/2,2) . '" width="' . round(max(0,$rw),2) . '" height="' . round($bh,2) . '" rx="2" fill="' . esc_attr($right_color) . '"/></g>';
+			    $bars .= '<g class="py-bar"><title>' . esc_html( $left_label . ' ' . $r['label'] . ': ' . $lvt . $unit ) . '</title><rect x="' . round($cxL - $lw,2) . '" y="' . round($cy - $bh/2,2) . '" width="' . round(max(0,$lw),2) . '" height="' . round($bh,2) . '" rx="2" fill="' . esc_attr($left_color) . '"/></g>';
+			    $bars .= '<text class="py-cat" x="' . round($midX,2) . '" y="' . round($cy + 4,2) . '" text-anchor="middle">' . esc_html( $r['label'] ) . '</text>';
+			    if ( $show_val ) {
+			        $bars .= '<text class="py-val" x="' . round($cxR + $rw + 4,2) . '" y="' . round($cy + 4,2) . '" text-anchor="start">' . esc_html( $rvt ) . '</text>';
+			        $bars .= '<text class="py-val" x="' . round($cxL - $lw - 4,2) . '" y="' . round($cy + 4,2) . '" text-anchor="end">' . esc_html( $lvt ) . '</text>';
+			    }
+			}
+
+			// --- CSS ---
+			$wrapCode .= '<style>
+			.' . $chart_id . '{font-family:inherit;max-width:820px;margin:0 auto;padding:18px 12px;box-sizing:border-box;}
+			.' . $chart_id . ' .py-title{font-size:18px;font-weight:600;color:#222;margin:0 0 6px;text-align:center;}
+			.' . $chart_id . ' svg{display:block;width:100%;height:auto;}
+			.' . $chart_id . ' .py-bar{transition:filter .15s ease;cursor:default;}
+			.' . $chart_id . ' .py-bar:hover{filter:brightness(1.1);}
+			.' . $chart_id . ' .py-cat{font-size:11px;fill:#666;}
+			.' . $chart_id . ' .py-val{font-size:10px;font-weight:600;fill:#666;}
+			</style>';
+
+			// --- assemble ---
+			$wrapCode .= '<div class="' . esc_attr( $chart_id ) . '">';
+			if ( $py_title !== '' ) { $wrapCode .= '<div class="py-title">' . esc_html( $py_title ) . '</div>'; }
+			$wrapCode .= '<svg viewBox="0 0 ' . $W . ' ' . round($H,2) . '" preserveAspectRatio="xMidYMid meet">' . $grid . $header . $bars . $axis . '</svg></div>';
+		break;
+
+		case 'skt_reversedbar':
+			static $rb_counter = 0;
+			$rb_counter++;
+			$wrapCode = '';
+			$chart_id = 'rb_' . $rb_counter;
+
+			// --- attributes ---
+			$raw      = ( isset( $atts ) && is_array( $atts ) ) ? $atts : array();
+			$rb_title = ! empty( $raw['chart_title'] ) ? sanitize_text_field( $raw['chart_title'] ) : '';
+			$text_color = ! empty( $raw['text_color'] ) ? sanitize_text_field( $raw['text_color'] ) : '';
+
+			$row_h    = ! empty( $raw['row_height'] ) ? (int) $raw['row_height'] : 38;
+			$bh_pct   = ! empty( $raw['bar_height'] ) ? (int) $raw['bar_height'] : 62;
+			$label_w  = ! empty( $raw['label_width'] ) ? (int) $raw['label_width'] : 100;
+			$show_val = ! ( isset( $raw['show_value'] ) && in_array( strtolower( $raw['show_value'] ), array( 'no', 'false', '0' ), true ) );
+
+			$palette = array( '#008FFB', '#00E396', '#FEB019', '#FF4560', '#775DD0', '#3F51B5', '#546E7A', '#D4526E', '#8D5B4C', '#F86624', '#2E294E', '#662E9B' );
+
+			// --- [skill label="" value="" color=""] rows ---
+			preg_match_all( '/\[skill\s+([^\]]+)\]/', $content, $skill_matches, PREG_SET_ORDER );
+			$rows = array();
+			foreach ( $skill_matches as $idx => $sk ) {
+			    preg_match_all( '/(\w+)="([^"]*)"/', $sk[1], $attr_m, PREG_SET_ORDER );
+			    $pairs = array(); foreach ( $attr_m as $a ) { $pairs[ $a[1] ] = $a[2]; }
+			    $label = isset( $pairs['label'] ) ? sanitize_text_field( $pairs['label'] )
+			           : ( isset( $pairs['title'] ) ? sanitize_text_field( $pairs['title'] ) : '' );
+			    $rows[] = array(
+			        'label' => $label,
+			        'value' => isset( $pairs['value'] ) ? max( 0, (float) $pairs['value'] ) : 0,
+			        'color' => ! empty( $pairs['color'] ) ? sanitize_text_field( $pairs['color'] ) : $palette[ $idx % count( $palette ) ],
+			    );
+			}
+			if ( empty( $rows ) ) { return ''; }
+			$n = count( $rows );
+
+			// --- max -> nice ---
+			$dmax = 0; foreach ( $rows as $r ) { if ( $r['value'] > $dmax ) $dmax = $r['value']; }
+			if ( $dmax <= 0 ) { $dmax = 1; }
+			$rough = $dmax / 5; $mag = pow( 10, floor( log10( $rough ) ) ); $normv = $rough / $mag;
+			$nice = $normv <= 1 ? 1 : ( $normv <= 2 ? 2 : ( $normv <= 5 ? 5 : 10 ) ); $step = $nice * $mag;
+			$niceMax = ceil( $dmax / $step ) * $step; if ( $niceMax <= 0 ) { $niceMax = $step; }
+
+			// --- geometry (origin RIGHT, bars LEFT) ---
+			$W = 780; $mL = 28; $mT = 10; $mB = 28;
+			$xRight = $W - $label_w; $plotW = $xRight - $mL;
+			$pH = $n * $row_h; $H = $mT + $pH + $mB; $bh = $row_h * ( $bh_pct / 100 );
+			$xv = function( $v ) use ( $xRight, $plotW, $niceMax ) { return $xRight - ( $v / $niceMax ) * $plotW; };
+
+			// --- reversed x-axis grid + labels (0 right, max left) ---
+			$grid = ''; $xlabels = '';
+			for ( $t = 0; $t <= $niceMax + 0.0001; $t += $step ) {
+			    $gx = $xv( $t ); $isZero = ( abs( $t ) < 0.0001 );
+			    $grid    .= '<line x1="' . round($gx,2) . '" y1="' . $mT . '" x2="' . round($gx,2) . '" y2="' . ( $mT + $pH ) . '" stroke="' . ( $isZero ? '#bbb' : '#eee' ) . '"/>';
+			    $xlabels .= '<text x="' . round($gx,2) . '" y="' . ( $H - 8 ) . '" text-anchor="middle" font-size="11" fill="#999">' . rtrim(rtrim(number_format($t,2,'.',''),'0'),'.') . '</text>';
+			}
+
+			// --- bars + right-side category labels ---
+			$bars = '';
+			foreach ( $rows as $j => $r ) {
+			    $cy = $mT + $row_h * $j + $row_h / 2;
+			    $bl = $xv( $r['value'] ); $bw = $xRight - $bl; if ( $bw < 1 ) $bw = 1;
+			    $vt = rtrim( rtrim( number_format( $r['value'], 2, '.', ',' ), '0' ), '.' );
+
+			    $bars .= '<g class="rb-bar"><title>' . esc_html( $r['label'] . ': ' . $vt ) . '</title>'
+			           . '<rect x="' . round($bl,2) . '" y="' . round($cy - $bh/2,2) . '" width="' . round($bw,2) . '" height="' . round($bh,2) . '" rx="2" fill="' . esc_attr( $r['color'] ) . '"/>'
+			           . '<text class="rb-cat" x="' . ( $xRight + 10 ) . '" y="' . round($cy + 4,2) . '" text-anchor="start">' . esc_html( $r['label'] ) . '</text>';
+			    if ( $show_val ) {
+			        if ( $bw > 42 ) { $vx = $bl + 6; $anc = 'start'; $vfill = '#fff'; }
+			        else            { $vx = $bl - 6; $anc = 'end';   $vfill = '#555'; }
+			        $bars .= '<text class="rb-val" x="' . round($vx,2) . '" y="' . round($cy + 4,2) . '" text-anchor="' . $anc . '" fill="' . $vfill . '">' . esc_html( $vt ) . '</text>';
+			    }
+			    $bars .= '</g>';
+			}
+
+			// --- CSS ---
+			$wrapCode .= '<style>
+			.' . $chart_id . '{font-family:inherit;max-width:820px;margin:0 auto;padding:18px 12px;box-sizing:border-box;}
+			.' . $chart_id . ' .rb-title{font-size:18px;font-weight:600;color:'.esc_attr( $text_color ) .';margin:0 0 8px;}
+			.' . $chart_id . ' svg{display:block;width:100%;height:auto;}
+			.' . $chart_id . ' .rb-bar{transition:filter .15s ease;cursor:default;}
+			.' . $chart_id . ' .rb-bar:hover{filter:brightness(1.1);}
+			.' . $chart_id . ' .rb-cat{font-size:12px;fill:'.esc_attr( $text_color ).';}
+			.' . $chart_id . ' .rb-val{font-size:11px;font-weight:600;fill:'.esc_attr( $text_color ).';}
+			</style>';
+
+			// --- assemble ---
+			$wrapCode .= '<div class="' . esc_attr( $chart_id ) . '">';
+			if ( $rb_title !== '' ) { $wrapCode .= '<div class="rb-title">' . esc_html( $rb_title ) . '</div>'; }
+			$wrapCode .= '<svg viewBox="0 0 ' . $W . ' ' . round($H,2) . '" preserveAspectRatio="xMidYMid meet">' . $grid . $bars . $xlabels . '</svg></div>';
+		break;
+
+		case 'skt_rangearea':
+			static $ra_counter = 0;
+			$ra_counter++;
+			$wrapCode = '';
+			$chart_id = 'ra_' . $ra_counter;
+
+			// --- attributes ---
+			$raw      = ( isset( $atts ) && is_array( $atts ) ) ? $atts : array();
+			$ra_title = ! empty( $raw['chart_title'] ) ? sanitize_text_field( $raw['chart_title'] ) : '';
+			$cats     = ! empty( $raw['categories'] ) ? array_map( 'trim', explode( ',', $raw['categories'] ) ) : array();
+			$ch_h     = ! empty( $raw['height'] ) ? (int) $raw['height'] : 380;
+			$bandop   = ( isset( $raw['band_opacity'] ) && $raw['band_opacity'] !== '' ) ? (float) $raw['band_opacity'] : 0.3;
+			$smoothOn = ! ( isset( $raw['smooth'] ) && in_array( strtolower( $raw['smooth'] ), array( 'no', 'false', '0' ), true ) );
+
+			$palette = array( '#008FFB', '#00E396', '#FEB019', '#FF4560', '#775DD0' );
+
+			// --- [skill label="" low="" high="" line="" color=""] series ---
+			preg_match_all( '/\[skill\s+([^\]]+)\]/', $content, $skill_matches, PREG_SET_ORDER );
+			$series = array(); $n = 0;
+			foreach ( $skill_matches as $idx => $sk ) {
+			    preg_match_all( '/(\w+)="([^"]*)"/', $sk[1], $attr_m, PREG_SET_ORDER );
+			    $pairs = array(); foreach ( $attr_m as $a ) { $pairs[ $a[1] ] = $a[2]; }
+			    $label = isset( $pairs['label'] ) ? sanitize_text_field( $pairs['label'] )
+			           : ( isset( $pairs['title'] ) ? sanitize_text_field( $pairs['title'] ) : ( 'Series ' . ( $idx + 1 ) ) );
+			    $parse = function( $key ) use ( $pairs ) {
+			        $out = array();
+			        if ( isset( $pairs[ $key ] ) && $pairs[ $key ] !== '' ) { foreach ( explode( ',', $pairs[ $key ] ) as $v ) { $out[] = (float) trim( $v ); } }
+			        return $out;
+			    };
+			    $low = $parse( 'low' ); $high = $parse( 'high' ); $line = $parse( 'line' );
+			    $cnt = max( count( $low ), count( $high ), count( $line ) );
+			    if ( $cnt > $n ) { $n = $cnt; }
+			    $series[] = array(
+			        'label' => $label,
+			        'color' => ! empty( $pairs['color'] ) ? sanitize_text_field( $pairs['color'] ) : $palette[ $idx % count( $palette ) ],
+			        'low'   => $low, 'high' => $high, 'line' => $line,
+			    );
+			}
+			if ( empty( $series ) || $n < 2 ) { return ''; }
+			foreach ( $series as &$s ) {
+			    while ( count( $s['low'] ) < $n )  { $s['low'][] = 0; }
+			    while ( count( $s['high'] ) < $n ) { $s['high'][] = 0; }
+			    if ( ! empty( $s['line'] ) ) { while ( count( $s['line'] ) < $n ) { $s['line'][] = 0; } }
+			} unset( $s );
+			for ( $j = count( $cats ); $j < $n; $j++ ) { $cats[] = (string) ( $j + 1 ); }
+
+			// --- y range ---
+			$dmin = INF; $dmax = -INF;
+			foreach ( $series as $s ) {
+			    foreach ( array( $s['low'], $s['high'], $s['line'] ) as $arr ) {
+			        foreach ( $arr as $v ) { if ( $v < $dmin ) $dmin = $v; if ( $v > $dmax ) $dmax = $v; }
+			    }
+			}
+			if ( ! is_finite( $dmin ) || ! is_finite( $dmax ) ) { return ''; }
+			if ( $dmin == $dmax ) { $dmax = $dmin + 1; }
+			$rng = $dmax - $dmin;
+			$rough = $rng / 5; $mag = pow( 10, floor( log10( max( $rough, 1e-9 ) ) ) ); $normv = $rough / $mag;
+			$nice = $normv <= 1 ? 1 : ( $normv <= 2 ? 2 : ( $normv <= 5 ? 5 : 10 ) ); $step = $nice * $mag;
+			$niceMin = floor( $dmin / $step ) * $step; $niceMax = ceil( $dmax / $step ) * $step;
+			if ( $niceMax <= $niceMin ) { $niceMax = $niceMin + $step; }
+
+			// --- geometry ---
+			$W = 780; $H = $ch_h; $mL = 46; $mR = 16; $mT = 14; $mB = 26;
+			$pW = $W - $mL - $mR; $pH = $H - $mT - $mB;
+			$xx = function( $j ) use ( $mL, $pW, $n ) { return $mL + ( $n > 1 ? $pW * $j / ( $n - 1 ) : 0 ); };
+			$yy = function( $v ) use ( $mT, $pH, $niceMin, $niceMax ) { return $mT + $pH * ( 1 - ( $v - $niceMin ) / ( $niceMax - $niceMin ) ); };
+
+			$smooth = function( $pts ) use ( $smoothOn ) {
+			    $m = count( $pts ); $d = '';
+			    if ( $m < 2 ) { return $d; }
+			    if ( ! $smoothOn ) { for ( $i = 1; $i < $m; $i++ ) { $d .= ' L' . round( $pts[$i][0], 2 ) . ',' . round( $pts[$i][1], 2 ); } return $d; }
+			    for ( $i = 0; $i < $m - 1; $i++ ) {
+			        $p0 = $pts[ $i == 0 ? 0 : $i - 1 ]; $p1 = $pts[ $i ]; $p2 = $pts[ $i + 1 ]; $p3 = $pts[ ( $i + 2 < $m ) ? $i + 2 : $m - 1 ];
+			        $c1x = $p1[0] + ( $p2[0] - $p0[0] ) / 6; $c1y = $p1[1] + ( $p2[1] - $p0[1] ) / 6;
+			        $c2x = $p2[0] - ( $p3[0] - $p1[0] ) / 6; $c2y = $p2[1] - ( $p3[1] - $p1[1] ) / 6;
+			        $d .= ' C' . round($c1x,2) . ',' . round($c1y,2) . ' ' . round($c2x,2) . ',' . round($c2y,2) . ' ' . round($p2[0],2) . ',' . round($p2[1],2);
+			    }
+			    return $d;
+			};
+
+			// --- bands + lines ---
+			$areas = ''; $lines = '';
+			foreach ( $series as $s ) {
+			    $hp = array(); $lp = array();
+			    for ( $j = 0; $j < $n; $j++ ) { $hp[] = array( $xx($j), $yy($s['high'][$j]) ); $lp[] = array( $xx($j), $yy($s['low'][$j]) ); }
+			    $lpRev = array_reverse( $lp );
+			    $d = 'M' . round($hp[0][0],2) . ',' . round($hp[0][1],2) . $smooth( $hp ) . ' L' . round($lpRev[0][0],2) . ',' . round($lpRev[0][1],2) . $smooth( $lpRev ) . ' Z';
+			    $areas .= '<path d="' . $d . '" fill="' . esc_attr( $s['color'] ) . '" fill-opacity="' . $bandop . '"/>';
+			    if ( ! empty( $s['line'] ) ) {
+			        $ln = array();
+			        for ( $j = 0; $j < $n; $j++ ) { $ln[] = array( $xx($j), $yy($s['line'][$j]) ); }
+			        $lines .= '<path d="M' . round($ln[0][0],2) . ',' . round($ln[0][1],2) . $smooth( $ln ) . '" fill="none" stroke="' . esc_attr( $s['color'] ) . '" stroke-width="2.5"/>';
+			    }
+			}
+
+			// --- grid + labels ---
+			$grid = ''; $ylabels = '';
+			for ( $v = $niceMin; $v <= $niceMax + 0.0001; $v += $step ) {
+			    $gy = $yy( $v );
+			    $grid    .= '<line x1="' . $mL . '" y1="' . round($gy,2) . '" x2="' . ( $W - $mR ) . '" y2="' . round($gy,2) . '" stroke="#eee"/>';
+			    $ylabels .= '<text x="' . ( $mL - 6 ) . '" y="' . round($gy + 3,2) . '" text-anchor="end" font-size="11" fill="#999">' . rtrim(rtrim(number_format($v,2,'.',''),'0'),'.') . '</text>';
+			}
+			$xlabels = '';
+			for ( $j = 0; $j < $n; $j++ ) { $xlabels .= '<text x="' . round($xx($j),2) . '" y="' . ( $H - 8 ) . '" text-anchor="middle" font-size="11" fill="#999">' . esc_html( $cats[$j] ) . '</text>'; }
+
+			// --- hover guide + tooltip ---
+			$hovers = ''; $slot = $pW / ( $n - 1 ); $tw = 168; $th = ( count( $series ) + 1 ) * 16 + 12;
+			for ( $j = 0; $j < $n; $j++ ) {
+			    $cx = $xx( $j ); $hx = $cx - $slot / 2;
+			    $tx = $cx + 10; if ( $tx + $tw > $W - 2 ) { $tx = $cx - 10 - $tw; }
+			    $ty = $mT + 4;
+			    $tip = '<g class="ra-tip"><rect x="' . round($tx,2) . '" y="' . $ty . '" width="' . $tw . '" height="' . $th . '" rx="5" fill="#fff" stroke="#ddd"/><text x="' . ( $tx + 10 ) . '" y="' . ( $ty + 18 ) . '" font-size="11.5" font-weight="700" fill="#333">' . esc_html( $cats[$j] ) . '</text>';
+			    $ly = $ty + 36;
+			    foreach ( $series as $s ) {
+			        $lo = rtrim(rtrim(number_format($s['low'][$j],2,'.',''),'0'),'.');
+			        $hi = rtrim(rtrim(number_format($s['high'][$j],2,'.',''),'0'),'.');
+			        $lnv = ! empty($s['line']) ? rtrim(rtrim(number_format($s['line'][$j],2,'.',''),'0'),'.') : '';
+			        $txt = $lo . '–' . $hi . ( $lnv !== '' ? '  (' . $lnv . ')' : '' );
+			        $tip .= '<circle cx="' . ( $tx + 14 ) . '" cy="' . ( $ly - 4 ) . '" r="4" fill="' . esc_attr( $s['color'] ) . '"/><text x="' . ( $tx + 24 ) . '" y="' . $ly . '" font-size="10.5" fill="#555">' . esc_html( $s['label'] ) . '</text><text x="' . ( $tx + $tw - 10 ) . '" y="' . $ly . '" text-anchor="end" font-size="10.5" font-weight="600" fill="#333">' . esc_html( $txt ) . '</text>';
+			        $ly += 16;
+			    }
+			    $tip .= '</g>';
+			    $hovers .= '<g class="ra-hc"><line class="ra-guide" x1="' . round($cx,2) . '" y1="' . $mT . '" x2="' . round($cx,2) . '" y2="' . ( $mT + $pH ) . '" stroke="#bbb" stroke-dasharray="4 3"/>' . $tip . '<rect x="' . round($hx,2) . '" y="' . $mT . '" width="' . round($slot,2) . '" height="' . $pH . '" fill="transparent"/></g>';
+			}
+
+			// --- legend ---
+			$legend = '<div class="ra-legend">';
+			foreach ( $series as $s ) { $legend .= '<span class="ra-leg"><span class="ra-sw" style="background:' . esc_attr( $s['color'] ) . ';"></span>' . esc_html( $s['label'] ) . '</span>'; }
+			$legend .= '</div>';
+
+			// --- CSS ---
+			$wrapCode .= '<style>
+			.' . $chart_id . '{font-family:inherit;max-width:820px;margin:0 auto;padding:18px 12px;box-sizing:border-box;}
+			.' . $chart_id . ' .ra-title{font-size:18px;font-weight:600;color:#222;margin:0 0 6px;}
+			.' . $chart_id . ' .ra-legend{display:flex;flex-wrap:wrap;gap:14px;margin:0 0 8px;}
+			.' . $chart_id . ' .ra-leg{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:#555;}
+			.' . $chart_id . ' .ra-sw{width:12px;height:12px;border-radius:3px;display:inline-block;}
+			.' . $chart_id . ' svg{display:block;width:100%;height:auto;}
+			.' . $chart_id . ' .ra-tip,.' . $chart_id . ' .ra-guide{opacity:0;transition:opacity .12s;pointer-events:none;}
+			.' . $chart_id . ' .ra-hc:hover .ra-tip,.' . $chart_id . ' .ra-hc:hover .ra-guide{opacity:1;}
+			</style>';
+
+			// --- assemble ---
+			$wrapCode .= '<div class="' . esc_attr( $chart_id ) . '">';
+			if ( $ra_title !== '' ) { $wrapCode .= '<div class="ra-title">' . esc_html( $ra_title ) . '</div>'; }
+			$wrapCode .= $legend;
+			$wrapCode .= '<svg viewBox="0 0 ' . $W . ' ' . $H . '" preserveAspectRatio="xMidYMid meet">' . $grid . $areas . $lines . $ylabels . $xlabels . $hovers . '</svg></div>';
+		break;
+
+		case 'skt_trapezoidfunnel':
+			static $tf_counter = 0;
+			$tf_counter++;
+			$wrapCode = '';
+			$chart_id = 'tf_' . $tf_counter;
+
+			// --- attributes ---
+			$raw          = ( isset( $atts ) && is_array( $atts ) ) ? $atts : array();
+			$tf_title     = ! empty( $raw['chart_title'] ) ? sanitize_text_field( $raw['chart_title'] ) : '';
+			$base_color   = ! empty( $raw['color'] )       ? sanitize_text_field( $raw['color'] )       : '#3ecf8e';
+			$show_percent = ( isset( $raw['show_percent'] ) && in_array( strtolower( $raw['show_percent'] ), array( 'yes','true','1' ), true ) );
+			$seg_h        = ! empty( $raw['segment_height'] ) ? (int) $raw['segment_height'] : 88;
+			$gap          = ( isset( $raw['gap'] ) && $raw['gap'] !== '' ) ? (int) $raw['gap'] : 0;
+			$pointed      = ! ( isset( $raw['pointed'] ) && in_array( strtolower( $raw['pointed'] ), array( 'no','false','0' ), true ) );
+			$text_color   = ! empty( $raw['text_color'] ) ? sanitize_text_field( $raw['text_color'] ) : '';
+
+			// shade helper (f<1 darker, f>1 lighter)
+			$shade = function( $hex, $f ) {
+			    if ( ! preg_match( '/^#?[0-9a-fA-F]{3}$|^#?[0-9a-fA-F]{6}$/', $hex ) ) { return $hex; }
+			    $hex = ltrim( $hex, '#' );
+			    if ( strlen( $hex ) === 3 ) { $hex = $hex[0].$hex[0].$hex[1].$hex[1].$hex[2].$hex[2]; }
+			    $r = min(255,max(0,(int)round(hexdec(substr($hex,0,2))*$f)));
+			    $g = min(255,max(0,(int)round(hexdec(substr($hex,2,2))*$f)));
+			    $b = min(255,max(0,(int)round(hexdec(substr($hex,4,2))*$f)));
+			    return sprintf('#%02x%02x%02x',$r,$g,$b);
+			};
+
+			// --- [skill label="" value="" color=""] rows ---
+			preg_match_all( '/\[skill\s+([^\]]+)\]/', $content, $skill_matches, PREG_SET_ORDER );
+			$series = array();
+			foreach ( $skill_matches as $sk ) {
+			    preg_match_all( '/(\w+)="([^"]*)"/', $sk[1], $attr_m, PREG_SET_ORDER );
+			    $pairs = array(); foreach ( $attr_m as $a ) { $pairs[ $a[1] ] = $a[2]; }
+			    $series[] = array(
+			        'label' => isset( $pairs['label'] ) ? sanitize_text_field( $pairs['label'] ) : '',
+			        'value' => isset( $pairs['value'] ) ? max( 0, (float) $pairs['value'] ) : 0,
+			        'color' => ! empty( $pairs['color'] ) ? sanitize_text_field( $pairs['color'] ) : '',
+			    );
+			}
+			if ( empty( $series ) ) { return ''; }
+
+			$n = count( $series );
+			$baseVal = $series[0]['value'];
+			$maxv = 0; foreach ( $series as $s ) { if ( $s['value'] > $maxv ) $maxv = $s['value']; }
+			if ( $maxv <= 0 ) { $maxv = 1; }
+			if ( $baseVal <= 0 ) { $baseVal = $maxv; }
+
+			// --- geometry ---
+			$W = 660; $mT = 6; $mB = 6; $minW = 0.10;
+			$H = $mT + $mB + $n * $seg_h + max( 0, $n - 1 ) * $gap;
+			$cx = $W / 2; $full = $W * 0.94;
+			$wAt = function( $v ) use ( $maxv, $minW, $full ) { return max( $minW, $v / $maxv ) * $full; };
+
+			// defs: gradients + soft shadow
+			$defs = '<filter id="' . $chart_id . '_sh" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#000" flood-opacity="0.16"/></filter>';
+			$segsvg = ''; $y = $mT;
+			for ( $i = 0; $i < $n; $i++ ) {
+			    $s = $series[$i];
+			    $topV = ( $i === 0 ) ? $s['value'] : $series[$i-1]['value'];
+			    $botV = $s['value'];
+			    $tw = $wAt( $topV ); $bw = $wAt( $botV );
+			    if ( $pointed && $i === $n - 1 ) { $bw = 2; }
+
+
+			    $col  = $s['color'] !== '' ? $s['color'] : $shade( $base_color, 1.06 - $i * ( 0.10 / max(1,$n-1) ) );
+			    $colT = $shade( $col, 1.12 );
+			    $colB = $shade( $col, 0.90 );
+			    $gid  = $chart_id . '_g' . $i;
+			    $defs .= '<linearGradient id="' . $gid . '" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="' . $colT . '"/><stop offset="100%" stop-color="' . $colB . '"/></linearGradient>';
+
+			    $x1 = $cx - $tw/2; $x2 = $cx + $tw/2; $x3 = $cx + $bw/2; $x4 = $cx - $bw/2;
+			    $yt = $y; $yb = $y + $seg_h;
+
+			    $pct = ( $baseVal > 0 ) ? round( ( $s['value'] / $baseVal ) * 100, 1 ) : 0;
+			    $vt  = number_format( $s['value'] );
+
+			    $tcol = ( $text_color !== '' ) ? $text_color : $shade( $col, 0.45 );
+
+			    $segsvg .= '<g class="tf-seg"><title style="color:'.$text_color.'">' . esc_html( $s['label'] . ': ' . $vt . ( $show_percent ? ' (' . $pct . '%)' : '' ) ) . '</title>'
+			            . '<polygon points="' . round($x1,2).','.round($yt,2).' '.round($x2,2).','.round($yt,2).' '.round($x3,2).','.round($yb,2).' '.round($x4,2).','.round($yb,2) . '" fill="url(#' . $gid . ')" filter="url(#' . $chart_id . '_sh)"/>'
+			            . '<text class="tf-lab" x="' . round($cx,2) . '" y="' . round($yt + $seg_h/2 - ( $show_percent ? 8 : 1 ),2) . '" text-anchor="middle" fill="' . $tcol . '">' . esc_html( $s['label'] ) . '</text>'
+			            . '<text class="tf-val" x="' . round($cx,2) . '" y="' . round($yt + $seg_h/2 + ( $show_percent ? 9 : 16 ),2) . '" text-anchor="middle" fill="' . $tcol . '">' . esc_html( $vt . ( $show_percent ? '  ·  ' . $pct . '%' : '' ) ) . '</text>'
+			            . '</g>';
+
+			    $y = $yb + $gap;
+			}
+
+			$svg = '<svg viewBox="0 0 ' . $W . ' ' . round($H,2) . '" preserveAspectRatio="xMidYMid meet"><defs>' . $defs . '</defs>' . $segsvg . '</svg>';
+
+			// --- CSS ---
+			$wrapCode .= '<style>
+			.' . $chart_id . '{max-width:600px;margin:0 auto;padding:18px 12px;box-sizing:border-box;font-family:inherit;}
+			.' . $chart_id . ' .tf-title{font-size:21px;text-align:center;color:'.$title_color.';margin:0 0 16px;letter-spacing:.2px;}
+			.' . $chart_id . ' svg{display:block;width:100%;height:auto;overflow:visible;}
+			.' . $chart_id . ' .tf-seg{transition:transform .18s ease, filter .18s ease;transform-box:fill-box;transform-origin:center;cursor:default;}
+			.' . $chart_id . ' .tf-seg:hover{filter:brightness(1.05);transform:scale(1.015);}
+			.' . $chart_id . ' .tf-lab{font-size:12px;}
+			.' . $chart_id . ' .tf-val{font-size:12.5px;font-weight:500;opacity:.92;}
+			</style>';
+
+			// --- assemble ---
+			$wrapCode .= '<div class="' . esc_attr( $chart_id ) . '">';
+			if ( $tf_title !== '' ) { $wrapCode .= '<div class="tf-title">' . esc_html( $tf_title ) . '</div>'; }
+			$wrapCode .= $svg . '</div>';
+		break;
+
+		case 'skt_dumbbell':
+			static $db_counter = 0;
+			$db_counter++;
+			$wrapCode = '';
+			$chart_id = 'db_' . $db_counter;
+
+			// --- attributes ---
+			$raw      = ( isset( $atts ) && is_array( $atts ) ) ? $atts : array();
+			$db_title = ! empty( $raw['chart_title'] ) ? sanitize_text_field( $raw['chart_title'] ) : '';
+			$label_a  = ! empty( $raw['label_a'] ) ? sanitize_text_field( $raw['label_a'] ) : 'Start';
+			$label_b  = ! empty( $raw['label_b'] ) ? sanitize_text_field( $raw['label_b'] ) : 'End';
+			$color_a  = ! empty( $raw['color_a'] ) ? sanitize_text_field( $raw['color_a'] ) : '#008FFB';
+			$color_b  = ! empty( $raw['color_b'] ) ? sanitize_text_field( $raw['color_b'] ) : '#FF4560';
+			$conn_col = ! empty( $raw['connector_color'] ) ? sanitize_text_field( $raw['connector_color'] ) : '#d3dce6';
+			$ch_h     = ! empty( $raw['height'] ) ? (int) $raw['height'] : 380;
+			$dot_r    = ! empty( $raw['dot_size'] ) ? (int) $raw['dot_size'] : 6;
+			$show_val = ( isset( $raw['show_value'] ) && in_array( strtolower( $raw['show_value'] ), array( 'yes', 'true', '1' ), true ) );
+
+			// --- [skill label="" a="" b=""] rows (aliases: start/end, from/to, low/high) ---
+			preg_match_all( '/\[skill\s+([^\]]+)\]/', $content, $skill_matches, PREG_SET_ORDER );
+			$rows = array();
+			foreach ( $skill_matches as $sk ) {
+			    preg_match_all( '/(\w+)="([^"]*)"/', $sk[1], $attr_m, PREG_SET_ORDER );
+			    $pairs = array(); foreach ( $attr_m as $a ) { $pairs[ $a[1] ] = $a[2]; }
+			    $label = isset( $pairs['label'] ) ? sanitize_text_field( $pairs['label'] )
+			           : ( isset( $pairs['title'] ) ? sanitize_text_field( $pairs['title'] ) : '' );
+			    $av = isset($pairs['a']) ? $pairs['a'] : ( isset($pairs['start']) ? $pairs['start'] : ( isset($pairs['from']) ? $pairs['from'] : ( isset($pairs['low'])  ? $pairs['low']  : null ) ) );
+			    $bv = isset($pairs['b']) ? $pairs['b'] : ( isset($pairs['end'])   ? $pairs['end']   : ( isset($pairs['to'])   ? $pairs['to']   : ( isset($pairs['high']) ? $pairs['high'] : null ) ) );
+			    if ( $av === null || $bv === null ) { continue; }
+			    $rows[] = array( 'label' => $label, 'a' => (float) $av, 'b' => (float) $bv );
+			}
+			if ( empty( $rows ) ) { return ''; }
+			$n = count( $rows );
+
+			// --- y range ---
+			$dmin = INF; $dmax = -INF;
+			foreach ( $rows as $r ) { $dmin = min( $dmin, $r['a'], $r['b'] ); $dmax = max( $dmax, $r['a'], $r['b'] ); }
+			if ( $dmin == $dmax ) { $dmax = $dmin + 1; }
+			$rng = $dmax - $dmin;
+			$rough = $rng / 5; $mag = pow( 10, floor( log10( max( $rough, 1e-9 ) ) ) ); $normv = $rough / $mag;
+			$nice = $normv <= 1 ? 1 : ( $normv <= 2 ? 2 : ( $normv <= 5 ? 5 : 10 ) ); $step = $nice * $mag;
+			$niceMin = floor( $dmin / $step ) * $step; $niceMax = ceil( $dmax / $step ) * $step;
+			if ( $niceMax <= $niceMin ) { $niceMax = $niceMin + $step; }
+
+			// --- geometry ---
+			$W = 780; $H = $ch_h; $mL = 46; $mR = 16; $mT = 14; $mB = 26;
+			$pW = $W - $mL - $mR; $pH = $H - $mT - $mB; $slot = $pW / $n;
+			$xx = function( $j ) use ( $mL, $slot ) { return $mL + $slot * ( $j + 0.5 ); };
+			$yy = function( $v ) use ( $mT, $pH, $niceMin, $niceMax ) { return $mT + $pH * ( 1 - ( $v - $niceMin ) / ( $niceMax - $niceMin ) ); };
+
+			// --- grid + y labels ---
+			$grid = ''; $ylabels = '';
+			for ( $v = $niceMin; $v <= $niceMax + 0.0001; $v += $step ) {
+			    $gy = $yy( $v );
+			    $grid    .= '<line x1="' . $mL . '" y1="' . round($gy,2) . '" x2="' . ( $W - $mR ) . '" y2="' . round($gy,2) . '" stroke="#eee"/>';
+			    $ylabels .= '<text x="' . ( $mL - 6 ) . '" y="' . round($gy + 3,2) . '" text-anchor="end" font-size="11" fill="#999">' . rtrim(rtrim(number_format($v,2,'.',''),'0'),'.') . '</text>';
+			}
+
+			// --- dumbbells + x labels ---
+			$dumb = ''; $xlabels = '';
+			foreach ( $rows as $j => $r ) {
+			    $cx = $xx( $j ); $ya = $yy( $r['a'] ); $yb = $yy( $r['b'] );
+			    $avt = rtrim(rtrim(number_format($r['a'],2,'.',','),'0'),'.');
+			    $bvt = rtrim(rtrim(number_format($r['b'],2,'.',','),'0'),'.');
+			    $diff = rtrim(rtrim(number_format($r['b'] - $r['a'],2,'.',','),'0'),'.');
+
+			    $dumb .= '<g class="db-bell"><title>' . esc_html( $r['label'] . ' — ' . $label_a . ': ' . $avt . ', ' . $label_b . ': ' . $bvt . ' (Δ ' . $diff . ')' ) . '</title>'
+			           . '<line x1="' . round($cx,2) . '" y1="' . round($ya,2) . '" x2="' . round($cx,2) . '" y2="' . round($yb,2) . '" stroke="' . esc_attr($conn_col) . '" stroke-width="3" stroke-linecap="round"/>'
+			           . '<circle class="db-dot" cx="' . round($cx,2) . '" cy="' . round($ya,2) . '" r="' . (int)$dot_r . '" fill="' . esc_attr($color_a) . '"/>'
+			           . '<circle class="db-dot" cx="' . round($cx,2) . '" cy="' . round($yb,2) . '" r="' . (int)$dot_r . '" fill="' . esc_attr($color_b) . '"/>';
+			    if ( $show_val ) {
+			        $aUp = $ya <= $yb;
+			        $dumb .= '<text class="db-val" x="' . round($cx,2) . '" y="' . round($ya + ( $aUp ? -10 : 16 ),2) . '" text-anchor="middle">' . esc_html($avt) . '</text>';
+			        $dumb .= '<text class="db-val" x="' . round($cx,2) . '" y="' . round($yb + ( $aUp ? 16 : -10 ),2) . '" text-anchor="middle">' . esc_html($bvt) . '</text>';
+			    }
+			    $dumb .= '<rect x="' . round($cx - $slot/2,2) . '" y="' . $mT . '" width="' . round($slot,2) . '" height="' . $pH . '" fill="transparent"/></g>';
+			    $xlabels .= '<text x="' . round($cx,2) . '" y="' . ( $H - 8 ) . '" text-anchor="middle" font-size="11" fill="#999">' . esc_html( $r['label'] ) . '</text>';
+			}
+
+			// --- legend ---
+			$legend = '<div class="db-legend"><span class="db-leg"><span class="db-sw" style="background:' . esc_attr($color_a) . ';"></span>' . esc_html($label_a) . '</span><span class="db-leg"><span class="db-sw" style="background:' . esc_attr($color_b) . ';"></span>' . esc_html($label_b) . '</span></div>';
+
+			// --- CSS ---
+			$wrapCode .= '<style>
+			.' . $chart_id . '{font-family:inherit;max-width:820px;margin:0 auto;padding:18px 12px;box-sizing:border-box;}
+			.' . $chart_id . ' .db-title{font-size:18px;font-weight:600;color:#222;margin:0 0 6px;}
+			.' . $chart_id . ' .db-legend{display:flex;flex-wrap:wrap;gap:16px;margin:0 0 8px;}
+			.' . $chart_id . ' .db-leg{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:#555;}
+			.' . $chart_id . ' .db-sw{width:12px;height:12px;border-radius:50%;display:inline-block;}
+			.' . $chart_id . ' svg{display:block;width:100%;height:auto;}
+			.' . $chart_id . ' .db-dot{transition:r .15s ease;}
+			.' . $chart_id . ' .db-bell:hover .db-dot{r:' . ( (int)$dot_r + 2 ) . ';}
+			.' . $chart_id . ' .db-val{font-size:10.5px;font-weight:600;fill:#666;}
+			</style>';
+
+			// --- assemble ---
+			$wrapCode .= '<div class="' . esc_attr( $chart_id ) . '">';
+			if ( $db_title !== '' ) { $wrapCode .= '<div class="db-title">' . esc_html( $db_title ) . '</div>'; }
+			$wrapCode .= $legend;
+			$wrapCode .= '<svg viewBox="0 0 ' . $W . ' ' . $H . '" preserveAspectRatio="xMidYMid meet">' . $grid . $dumb . $ylabels . $xlabels . '</svg></div>';
+		break;
+
+		case 'skt_slope':
+			static $sl_counter = 0;
+			$sl_counter++;
+			$wrapCode = '';
+			$chart_id = 'sl_' . $sl_counter;
+
+			// --- attributes ---
+			$raw       = ( isset( $atts ) && is_array( $atts ) ) ? $atts : array();
+			$sl_title  = ! empty( $raw['chart_title'] ) ? sanitize_text_field( $raw['chart_title'] ) : '';
+			$head_a    = ! empty( $raw['left_label'] )  ? sanitize_text_field( $raw['left_label'] )  : '';
+			$head_b    = ! empty( $raw['right_label'] ) ? sanitize_text_field( $raw['right_label'] ) : '';
+			$ch_h      = ! empty( $raw['height'] ) ? (int) $raw['height'] : 420;
+			$dot_r     = ! empty( $raw['dot_size'] ) ? (int) $raw['dot_size'] : 5;
+			$hide_val  = ( isset( $raw['show_value'] ) && in_array( strtolower( $raw['show_value'] ), array( 'no', 'false', '0' ), true ) );
+
+			$palette = array( '#008FFB', '#00E396', '#FEB019', '#FF4560', '#775DD0', '#3F51B5', '#546E7A', '#D4526E', '#8D5B4C', '#F86624' );
+
+			// --- [skill label="" start="" end="" color=""] series ---
+			preg_match_all( '/\[skill\s+([^\]]+)\]/', $content, $skill_matches, PREG_SET_ORDER );
+			$rows = array();
+			foreach ( $skill_matches as $idx => $sk ) {
+			    preg_match_all( '/(\w+)="([^"]*)"/', $sk[1], $attr_m, PREG_SET_ORDER );
+			    $pairs = array(); foreach ( $attr_m as $a ) { $pairs[ $a[1] ] = $a[2]; }
+			    $label = isset( $pairs['label'] ) ? sanitize_text_field( $pairs['label'] )
+			           : ( isset( $pairs['title'] ) ? sanitize_text_field( $pairs['title'] ) : '' );
+			    $av = isset($pairs['start']) ? $pairs['start'] : ( isset($pairs['a']) ? $pairs['a'] : ( isset($pairs['from']) ? $pairs['from'] : null ) );
+			    $bv = isset($pairs['end'])   ? $pairs['end']   : ( isset($pairs['b']) ? $pairs['b'] : ( isset($pairs['to'])   ? $pairs['to']   : null ) );
+			    if ( $av === null || $bv === null ) { continue; }
+			    $rows[] = array(
+			        'label' => $label,
+			        'a'     => (float) $av,
+			        'b'     => (float) $bv,
+			        'color' => ! empty( $pairs['color'] ) ? sanitize_text_field( $pairs['color'] ) : $palette[ $idx % count( $palette ) ],
+			    );
+			}
+			if ( empty( $rows ) ) { return ''; }
+
+			// --- y range ---
+			$dmin = INF; $dmax = -INF;
+			foreach ( $rows as $r ) { $dmin = min( $dmin, $r['a'], $r['b'] ); $dmax = max( $dmax, $r['a'], $r['b'] ); }
+			if ( $dmin == $dmax ) { $dmax = $dmin + 1; }
+			$pad = ( $dmax - $dmin ) * 0.08; $dmin -= $pad; $dmax += $pad;
+
+			// --- geometry (sirf 2 x-points) ---
+			$W = 780; $H = $ch_h; $mT = 44; $mB = 20;
+			$xA = 210; $xB = $W - 210;   // do columns; sides me labels ki jagah
+			$pH = $H - $mT - $mB;
+			$yy = function( $v ) use ( $mT, $pH, $dmin, $dmax ) { return $mT + $pH * ( 1 - ( $v - $dmin ) / ( $dmax - $dmin ) ); };
+
+			// guide verticals + headers
+			$base = '<line x1="' . $xA . '" y1="' . $mT . '" x2="' . $xA . '" y2="' . ( $mT + $pH ) . '" stroke="#e3e3e3"/>'
+			      . '<line x1="' . $xB . '" y1="' . $mT . '" x2="' . $xB . '" y2="' . ( $mT + $pH ) . '" stroke="#e3e3e3"/>';
+			if ( $head_a !== '' ) { $base .= '<text x="' . $xA . '" y="' . ( $mT - 18 ) . '" text-anchor="middle" font-size="13" font-weight="700" fill="#555">' . esc_html( $head_a ) . '</text>'; }
+			if ( $head_b !== '' ) { $base .= '<text x="' . $xB . '" y="' . ( $mT - 18 ) . '" text-anchor="middle" font-size="13" font-weight="700" fill="#555">' . esc_html( $head_b ) . '</text>'; }
+
+			// --- slope lines + endpoints + side labels ---
+			$slopes = '';
+			foreach ( $rows as $r ) {
+			    $ya = $yy( $r['a'] ); $yb = $yy( $r['b'] );
+			    $avt = rtrim(rtrim(number_format($r['a'],2,'.',','),'0'),'.');
+			    $bvt = rtrim(rtrim(number_format($r['b'],2,'.',','),'0'),'.');
+			    $la = $hide_val ? esc_html( $r['label'] ) : esc_html( $r['label'] . '  ' . $avt );
+			    $lb = $hide_val ? esc_html( $r['label'] ) : esc_html( $bvt . '  ' . $r['label'] );
+
+			    $slopes .= '<g class="sp-line"><title>' . esc_html( $r['label'] . ': ' . $avt . ' → ' . $bvt ) . '</title>'
+			            . '<line x1="' . $xA . '" y1="' . round($ya,2) . '" x2="' . $xB . '" y2="' . round($yb,2) . '" stroke="' . esc_attr($r['color']) . '" stroke-width="2.5"/>'
+			            . '<circle cx="' . $xA . '" cy="' . round($ya,2) . '" r="' . (int)$dot_r . '" fill="' . esc_attr($r['color']) . '"/>'
+			            . '<circle cx="' . $xB . '" cy="' . round($yb,2) . '" r="' . (int)$dot_r . '" fill="' . esc_attr($r['color']) . '"/>'
+			            . '<text class="sp-lab" x="' . ( $xA - 12 ) . '" y="' . round($ya + 4,2) . '" text-anchor="end" fill="' . esc_attr($r['color']) . '">' . $la . '</text>'
+			            . '<text class="sp-lab" x="' . ( $xB + 12 ) . '" y="' . round($yb + 4,2) . '" text-anchor="start" fill="' . esc_attr($r['color']) . '">' . $lb . '</text>'
+			            . '</g>';
+			}
+
+			// --- CSS ---
+			$wrapCode .= '<style>
+			.' . $chart_id . '{font-family:inherit;max-width:820px;margin:0 auto;padding:18px 12px;box-sizing:border-box;}
+			.' . $chart_id . ' .sp-title{font-size:18px;font-weight:600;color:#222;margin:0 0 6px;text-align:center;}
+			.' . $chart_id . ' svg{display:block;width:100%;height:auto;}
+			.' . $chart_id . ' .sp-line{opacity:.92;transition:opacity .15s ease;cursor:default;}
+			.' . $chart_id . ' svg:hover .sp-line{opacity:.28;}
+			.' . $chart_id . ' svg .sp-line:hover{opacity:1;}
+			.' . $chart_id . ' .sp-lab{font-size:12px;font-weight:600;}
+			</style>';
+
+			// --- assemble ---
+			$wrapCode .= '<div class="' . esc_attr( $chart_id ) . '">';
+			if ( $sl_title !== '' ) { $wrapCode .= '<div class="sp-title">' . esc_html( $sl_title ) . '</div>'; }
+			$wrapCode .= '<svg viewBox="0 0 ' . $W . ' ' . $H . '" preserveAspectRatio="xMidYMid meet">' . $base . $slopes . '</svg></div>';
+		break;
+
 	}
 	return $wrapCode;
 }
@@ -2930,5 +4303,6 @@ function sktskillbar_hex_to_rgb_to_rgb_opacity( $hex, $opacity = 0.2 ) {
         $opacity
     );
 }
+
 
 ?>

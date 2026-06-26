@@ -4,7 +4,7 @@ Tags: skill bars, circular skill bar, half circle skill bar, vertical skill bar,
 Requires at least: 5.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.8
+Stable tag: 3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -25,7 +25,7 @@ This section describes how to install the plugin and get it working.
 
 e.g.
 
-1. Upload `sktskillbar.zip` to the `/wp-content/plugins/` directory
+1. Upload `skt-skill-bar.zip` to the `/wp-content/plugins/` directory
 2. Activate the plugin through the 'Plugins' menu in WordPress
 3. Skill Bar Shortcode: <a href="https://www.sktperfectdemo.com/demos/exceptiona/skt-skill-bar/" target="_blank" title="Skill Bar Shortcode">Shortcode</a> 
 
@@ -45,4 +45,4 @@ Easy to use plugin. Just install it and check under settings for SKT Skill Bar. 
 
 == License ==
 
-This plugin is free and complimentary and is governed by GPL2 License. Kindly check our wordpress themes at: http://www.sktthemes.org/
+This plugin is free and complimentary and is governed by GPL2 License. Kindly check our wordpress themes at: https://www.sktthemes.org/
