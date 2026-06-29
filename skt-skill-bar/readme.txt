@@ -4,7 +4,7 @@ Tags: skill bars, circular skill bar, half circle skill bar, vertical skill bar,
 Requires at least: 5.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 3.0
+Stable tag: 3.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
